@@ -21,9 +21,8 @@ export function useMediaPipe(
   onPostureResult: (result: PostureResult) => void
 ) {
   const [status, setStatus] = useState<MediaPipeStatus>('idle')
-  const rafRef      = useRef<number | null>(null)
+  const rafRef        = useRef<number | null>(null)
   const landmarkerRef = useRef<PoseLandmarker | null>(null)
-  const startTimeRef  = useRef<number>(0)
 
   const initialize = useCallback(async () => {
     setStatus('loading')
@@ -68,7 +67,6 @@ export function useMediaPipe(
     video.srcObject = stream
     await video.play()
 
-    startTimeRef.current = performance.now()
     const ctx = canvas.getContext('2d')!
 
     const loop = () => {
@@ -82,7 +80,10 @@ export function useMediaPipe(
 
       canvas.width  = video.videoWidth
       canvas.height = video.videoHeight
-      const tsMs = performance.now() - startTimeRef.current
+      // 使用绝对时间戳：performance.now() 从页面加载起单调递增
+      // 不能用相对时间（从 0 重置），否则多次 start/stop 后会触发
+      // MediaPipe 的 "Packet timestamp mismatch" 错误
+      const tsMs = performance.now()
 
       let result: ReturnType<PoseLandmarker['detectForVideo']>
       try {
