@@ -1,5 +1,5 @@
 // frontend/src/lib/api.ts
-import type { QuotaInfo, SessionId, SessionListResponse, SessionStats, User } from '@/types'
+import type { CreateOrderResponse, Order, QuotaInfo, SessionId, SessionListResponse, SessionStats, User } from '@/types'
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 const MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true'
@@ -129,6 +129,30 @@ export const api = {
       if (params?.limit != null) qs.set('limit', String(params.limit))
       const query = qs.toString() ? `?${qs}` : ''
       return request<SessionListResponse>(`/sessions${query}`)
+    },
+  },
+
+  // ── 支付 ──────────────────────────────────────────────────
+  payment: {
+    createOrder(): Promise<CreateOrderResponse> {
+      if (MOCK) {
+        return Promise.resolve({
+          orderId: 'mock-order-1',
+          qrCode: 'https://qr.alipay.com/mock',
+        })
+      }
+      return request<CreateOrderResponse>('/payment/orders', { method: 'POST' })
+    },
+
+    getOrder(orderId: string): Promise<Order> {
+      if (MOCK) {
+        // mock：3 秒后模拟支付成功
+        return Promise.resolve({
+          id: orderId,
+          status: (Date.now() % 6000 < 3000 ? 'pending' : 'paid') as Order['status'],
+        })
+      }
+      return request<Order>(`/payment/orders/${orderId}`)
     },
   },
 }

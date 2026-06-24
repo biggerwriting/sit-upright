@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import create_tables
 from auth.router import router as auth_router
 from quota.router import router as quota_router
+from payment.router import router as payment_router
 
 
 @asynccontextmanager
@@ -25,6 +26,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(quota_router)
+app.include_router(payment_router)
 
 
 @app.get("/health")

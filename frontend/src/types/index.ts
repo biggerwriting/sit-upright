@@ -53,3 +53,13 @@ export type SessionListResponse = {
   sessions: SessionListItem[]
   hasMore: boolean
 }
+
+export type Order = {
+  id: string
+  status: 'pending' | 'paid' | 'failed'
+}
+
+export type CreateOrderResponse = {
+  orderId: string
+  qrCode: string
+}
