@@ -1,5 +1,5 @@
 # backend/schemas.py
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class SignupRequest(BaseModel):
@@ -62,8 +62,8 @@ class CreateSessionResponse(BaseModel):
 
 
 class UpdateSessionRequest(BaseModel):
-    goodSeconds: int
-    badSeconds: int
+    goodSeconds: int = Field(ge=0)
+    badSeconds: int = Field(ge=0)
 
 
 class UpdateSessionResponse(BaseModel):

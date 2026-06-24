@@ -1,6 +1,5 @@
 # backend/tests/test_quota_router.py
 import pytest
-from unittest.mock import AsyncMock, patch
 
 
 async def test_get_quota_returns_free_trial(client):
