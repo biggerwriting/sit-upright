@@ -133,3 +133,83 @@ UV_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/ uv run check_posture.py
 echo '[[index]]
 url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 default = true' > uv.toml
+
+
+# 添加用户登录模块
+
+
+环境启动
+
+终端 1 — 后端：
+cd /Users/tongqianwen/ExpProjects/learn/good-sit/backend
+source .venv/bin/activate
+uvicorn main:app --reload --port 8000
+
+终端 2 — 前端：
+cd /Users/tongqianwen/ExpProjects/learn/good-sit/frontend
+npm run dev
+
+---
+验收清单
+
+1. 路由保护（Middleware）
+
+- [ ] 浏览器直接访问 http://localhost:3000/app → 自动跳转到 /login
+- [ ] 直接访问 http://localhost:3000/history → 自动跳转到 /login
+- [ ] 直接访问 http://localhost:3000（落地页）→ 正常显示，不跳转
+
+2. 注册
+
+- [ ] 访问 /signup，填写邮箱 + 密码（≥8 位）→ 注册成功，跳转到 /app
+- [ ] 再用同一邮箱注册 → 显示"该邮箱可能已被注册"错误
+- [ ] 密码少于 8 位 → 浏览器原生阻止提交（minLength 校验）
+
+3. 登录 / 登出
+
+- [ ] 注册后刷新 /app → 仍正常显示（Cookie 持久化）
+- [ ] 访问 /login，用刚注册的邮箱+密码登录 → 跳转到 /app
+- [ ] 输入错误密码 → 显示"邮箱或密码错误"
+
+4. 会话持久化
+
+- [ ] 完成登录后，关闭浏览器标签页再重新打开 http://localhost:3000/app → 不需要重新登录（Cookie 7 天有效）
+
+5. 密码重置
+
+- [ ] 访问 /forgot-password，输入已注册邮箱 → 显示"邮件已发送"确认页
+- [ ] 输入未注册邮箱 → 同样显示"邮件已发送"（防枚举，不报错）
+
+▎ 要真正收到重置邮件，需要在 backend/.env 里填写真实的 SMTP 配置。开发时可以跳过这一步，直接在后端日志里找 token，手动访问 /reset-password?token=xxx 验证。
+
+- [ ] 访问 /reset-password?token=随便输的→ 显示"重置链接无效或已过期"错误
+- [ ] 访问 /reset-password（不带 token）→ 显示"无效的重置链接"提示
+
+6. 后端接口直接验证（可选）
+
+# 注册
+curl -s -c /tmp/cookie.txt -X POST http://localhost:8000/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"password123"}' | python3 -m json.tool
+
+# 查看当前用户（带 Cookie）
+curl -s -b /tmp/cookie.txt http://localhost:8000/auth/me | python3 -m json.tool
+
+# 登出
+curl -s -b /tmp/cookie.txt -c /tmp/cookie.txt -X POST http://localhost:8000/auth/logout
+
+# 登出后再查（应返回 401）
+curl -s -b /tmp/cookie.txt http://localhost:8000/auth/me
+
+---
+已知待处理事项（合并到 main 前无需解决）
+
+┌────────────┬─────────────────────────────────────────┐
+│   优先级   │                  事项                   │
+├────────────┼─────────────────────────────────────────┤
+│ 生产部署前 │ COOKIE_SECURE=true（HTTPS 环境设置）    │
+├────────────┼─────────────────────────────────────────┤
+│ 后续       │ 登录/注册接口添加速率限制（防暴力破解） │
+├────────────┼─────────────────────────────────────────┤
+│ 后续       │ 补充密码重置 token 重放攻击的测试用例   │
+└────────────┴─────────────────────────────────────────┘
+
