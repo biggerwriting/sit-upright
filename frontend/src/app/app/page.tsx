@@ -31,6 +31,7 @@ export default function AppPage() {
   const tickTimerRef                  = useRef<ReturnType<typeof setInterval> | null>(null)
   const reportTimerRef                = useRef<ReturnType<typeof setInterval> | null>(null)
   const lastResultRef                 = useRef<PostureResult>({ isHunching: false, headShoulderDist: 0 })
+  const sessionIdRef                  = useRef<string | null>(null)
 
   const tracker = useSessionTracker()
   const alerts  = useAlertManager()
@@ -59,6 +60,7 @@ export default function AppPage() {
     setPageStatus('loading')
     const { sessionId: sid } = await api.createSession()
     setSessionId(sid)
+    sessionIdRef.current = sid
     await mediaPipe.startDetection()
     setPageStatus('running')
 
@@ -94,11 +96,12 @@ export default function AppPage() {
     mediaPipe.stopDetection()
     alerts.reset()
 
-    const stats = await api.endSession(sessionId!)
+    const stats = await api.endSession(sessionIdRef.current!)
+    sessionIdRef.current = null
     setFinalStats(stats)
     setPageStatus('idle')
     tracker.reset()
-  }, [mediaPipe, alerts, tracker, sessionId])
+  }, [mediaPipe, alerts, tracker])
 
   return (
     <div className="min-h-screen flex flex-col">
