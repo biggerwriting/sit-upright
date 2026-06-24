@@ -1,13 +1,12 @@
 // frontend/src/lib/api.ts
-import type { QuotaInfo, SessionId, SessionStats } from '@/types'
+import type { QuotaInfo, SessionId, SessionStats, User } from '@/types'
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
-
-// ── Mock 数据（后端未就绪时使用）──────────────────────────────
 const MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true'
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
+    credentials: 'include',                         // ← 新增：携带 Cookie
     headers: { 'Content-Type': 'application/json' },
     ...options,
   })
@@ -16,8 +15,54 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  // ── 认证 ─────────────────────────────────────────────────────
+  auth: {
+    signup(email: string, password: string): Promise<User> {
+      if (MOCK) return Promise.resolve({ id: 1, email })
+      return request<User>('/auth/signup', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      })
+    },
+
+    login(email: string, password: string): Promise<User> {
+      if (MOCK) return Promise.resolve({ id: 1, email })
+      return request<User>('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      })
+    },
+
+    logout(): Promise<void> {
+      if (MOCK) return Promise.resolve()
+      return request<void>('/auth/logout', { method: 'POST' })
+    },
+
+    me(): Promise<User> {
+      if (MOCK) return Promise.resolve({ id: 1, email: 'demo@example.com' })
+      return request<User>('/auth/me')
+    },
+
+    forgotPassword(email: string): Promise<void> {
+      if (MOCK) return Promise.resolve()
+      return request<void>('/auth/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+      })
+    },
+
+    resetPassword(token: string, newPassword: string): Promise<void> {
+      if (MOCK) return Promise.resolve()
+      return request<void>('/auth/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({ token, new_password: newPassword }),
+      })
+    },
+  },
+
+  // ── 会话（子系统 1 原有）────────────────────────────────────
   getQuota(): Promise<QuotaInfo> {
-    if (MOCK) return Promise.resolve({ remainingSeconds: 300 }) // 5 分钟试用
+    if (MOCK) return Promise.resolve({ remainingSeconds: 300 })
     return request<QuotaInfo>('/quota')
   },
 

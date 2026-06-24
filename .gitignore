@@ -15,3 +15,8 @@ build_env/
 __pycache__/
 *.pyc
 *.pyo
+
+# Backend virtualenv and local files
+backend/.venv/
+backend/.env
+backend/posture.db

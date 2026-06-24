@@ -28,3 +28,8 @@ export type QuotaInfo = {
 }
 
 export type SessionId = string
+
+export type User = {
+  id: number
+  email: string
+}
