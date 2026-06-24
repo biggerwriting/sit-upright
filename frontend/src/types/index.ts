@@ -39,3 +39,17 @@ export type User = {
   id: number
   email: string
 }
+
+export type SessionListItem = {
+  id: string
+  startedAt: string   // ISO 8601
+  endedAt: string     // ISO 8601
+  totalSeconds: number
+  goodSeconds: number
+  badSeconds: number
+}
+
+export type SessionListResponse = {
+  sessions: SessionListItem[]
+  hasMore: boolean
+}

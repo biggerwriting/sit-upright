@@ -80,3 +80,16 @@ class SessionStatsResponse(BaseModel):
     goodSeconds: int
     badSeconds: int
     segments: list[SessionStatsSegment]
+
+
+class SessionListItem(BaseModel):
+    id: str
+    startedAt: dt
+    endedAt: dt
+    totalSeconds: int
+    goodSeconds: int
+    badSeconds: int
+
+class SessionListResponse(BaseModel):
+    sessions: list[SessionListItem]
+    hasMore: bool
