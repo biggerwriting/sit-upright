@@ -1,4 +1,5 @@
 # backend/auth/router.py
+import os
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,6 +25,7 @@ from models import User
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 COOKIE_MAX_AGE = 7 * 24 * 60 * 60  # 604800 seconds
+_COOKIE_SECURE = os.getenv("COOKIE_SECURE", "false").lower() == "true"
 
 
 def _set_auth_cookie(response: Response, user_id: int) -> None:
@@ -35,6 +37,7 @@ def _set_auth_cookie(response: Response, user_id: int) -> None:
         samesite="lax",
         max_age=COOKIE_MAX_AGE,
         path="/",
+        secure=_COOKIE_SECURE,
     )
 
 
@@ -58,7 +61,13 @@ async def login(
 
 @router.post("/logout", response_model=OkResponse)
 async def logout(response: Response):
-    response.delete_cookie(key="token", path="/", samesite="lax")
+    response.delete_cookie(
+        key="token",
+        path="/",
+        httponly=True,
+        samesite="lax",
+        secure=_COOKIE_SECURE,
+    )
     return OkResponse()
 
 
