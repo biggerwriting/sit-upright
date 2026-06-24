@@ -42,3 +42,41 @@ class ResetPasswordRequest(BaseModel):
 
 class OkResponse(BaseModel):
     ok: bool = True
+
+
+from datetime import datetime as dt
+
+
+class NearExpiry(BaseModel):
+    seconds: int
+    expiresAt: dt
+
+
+class QuotaResponse(BaseModel):
+    remainingSeconds: int
+    nearExpiry: NearExpiry | None = None
+
+
+class CreateSessionResponse(BaseModel):
+    sessionId: str
+
+
+class UpdateSessionRequest(BaseModel):
+    goodSeconds: int
+    badSeconds: int
+
+
+class UpdateSessionResponse(BaseModel):
+    ok: bool = True
+
+
+class SessionStatsSegment(BaseModel):
+    type: str            # "good" | "bad"
+    durationSeconds: int
+
+
+class SessionStatsResponse(BaseModel):
+    totalSeconds: int
+    goodSeconds: int
+    badSeconds: int
+    segments: list[SessionStatsSegment]
