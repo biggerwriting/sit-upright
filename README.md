@@ -94,10 +94,7 @@ cp /原目录/pose_landmarker_lite.task /新目录/
 如需打包成独立 `.app`，参见 [INSTALL.md](INSTALL.md)。
 
 # 提高依赖库下载速度
-配置已生效，来总结一下：
-
----
-解决方案：换清华镜像源
+换清华镜像源
 
 配置文件：~/.config/uv/uv.toml（全局生效，所有项目共享）
 
@@ -132,7 +129,7 @@ default = true
 UV_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/ uv run check_posture.py
 
 项目级配置（只对当前项目生效，放在项目根目录）：
-# 在项目目录建 uv.toml，内容同上
+## 在项目目录建 uv.toml，内容同上
 echo '[[index]]
 url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 default = true' > uv.toml
