@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models import User, PasswordResetToken
+from models import User, PasswordResetToken, QuotaPackage
 from auth.utils import hash_password, verify_password, send_reset_email
 
 RESET_TOKEN_EXPIRE_HOURS = 1
@@ -23,6 +23,9 @@ async def create_user(db: AsyncSession, email: str, password: str) -> User:
     db.add(user)
     await db.commit()
     await db.refresh(user)
+    free_trial = QuotaPackage(user_id=user.id, remaining_seconds=300, expires_at=None)
+    db.add(free_trial)
+    await db.commit()
     return user
 
 
