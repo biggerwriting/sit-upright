@@ -1,5 +1,5 @@
 // frontend/src/lib/api.ts
-import type { QuotaInfo, SessionId, SessionStats, User } from '@/types'
+import type { QuotaInfo, SessionId, SessionListResponse, SessionStats, User } from '@/types'
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 const MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true'
@@ -96,5 +96,39 @@ export const api = {
         ],
       })
     return request<SessionStats>(`/sessions/${sessionId}/end`, { method: 'PATCH' })
+  },
+
+  // ── 历史记录 ─────────────────────────────────────────────────
+  sessions: {
+    list(params?: { before?: string; limit?: number }): Promise<SessionListResponse> {
+      if (MOCK) {
+        return Promise.resolve({
+          sessions: [
+            {
+              id: 'mock-1',
+              startedAt: new Date(Date.now() - 3600000).toISOString(),
+              endedAt: new Date(Date.now() - 3000000).toISOString(),
+              totalSeconds: 600,
+              goodSeconds: 480,
+              badSeconds: 120,
+            },
+            {
+              id: 'mock-2',
+              startedAt: new Date(Date.now() - 7200000).toISOString(),
+              endedAt: new Date(Date.now() - 6600000).toISOString(),
+              totalSeconds: 600,
+              goodSeconds: 300,
+              badSeconds: 300,
+            },
+          ],
+          hasMore: false,
+        })
+      }
+      const qs = new URLSearchParams()
+      if (params?.before) qs.set('before', params.before)
+      if (params?.limit != null) qs.set('limit', String(params.limit))
+      const query = qs.toString() ? `?${qs}` : ''
+      return request<SessionListResponse>(`/sessions${query}`)
+    },
   },
 }
