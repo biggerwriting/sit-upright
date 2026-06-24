@@ -49,14 +49,22 @@ export function useMediaPipe(
   }, [])
 
   const startDetection = useCallback(async () => {
+    if (status !== 'ready') return
+
     const video  = videoRef.current
     const canvas = canvasRef.current
     if (!video || !canvas || !landmarkerRef.current) return
 
     // 请求摄像头（优先前置）
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'user' },
-    })
+    let stream: MediaStream
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user' },
+      })
+    } catch {
+      setStatus('error')
+      return
+    }
     video.srcObject = stream
     await video.play()
 
@@ -100,7 +108,7 @@ export function useMediaPipe(
     }
 
     rafRef.current = requestAnimationFrame(loop)
-  }, [videoRef, canvasRef, onPostureResult])
+  }, [status, videoRef, canvasRef, onPostureResult])
 
   const stopDetection = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current)
