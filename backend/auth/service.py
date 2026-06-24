@@ -50,14 +50,15 @@ async def initiate_password_reset(db: AsyncSession, email: str) -> None:
         return
     token_str = secrets.token_hex(32)
     expires = datetime.now(timezone.utc) + timedelta(hours=RESET_TOKEN_EXPIRE_HOURS)
-    token = PasswordResetToken(user_id=user.id, token=token_str, expires_at=expires)
-    db.add(token)
-    await db.commit()
     reset_url = (
         f"{os.getenv('RESET_BASE_URL', 'http://localhost:3000')}"
         f"/reset-password?token={token_str}"
     )
+    # Send email FIRST — if this fails, token is never persisted
     await send_reset_email(email, reset_url)
+    token = PasswordResetToken(user_id=user.id, token=token_str, expires_at=expires)
+    db.add(token)
+    await db.commit()
 
 
 async def complete_password_reset(
@@ -83,4 +84,13 @@ async def complete_password_reset(
         raise HTTPException(status_code=400, detail="用户不存在")
     user.hashed_password = hash_password(new_password)
     token.used = True
+    # Invalidate all other active tokens for this user
+    result3 = await db.execute(
+        select(PasswordResetToken).where(
+            PasswordResetToken.user_id == token.user_id,
+            PasswordResetToken.used == False,  # noqa: E712
+        )
+    )
+    for other_token in result3.scalars().all():
+        other_token.used = True
     await db.commit()
