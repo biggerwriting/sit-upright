@@ -49,9 +49,11 @@ export function PaymentModal({ orderId, qrCode, onClose, onSuccess }: Props) {
         <h2 className="text-xl font-bold mb-1">扫码支付</h2>
         <p className="text-3xl font-bold text-green-600 mb-4">¥9.9</p>
 
-        <div className="flex justify-center mb-4">
-          <QRCodeSVG value={qrCode} size={200} />
-        </div>
+        {!failed && (
+          <div className="flex justify-center mb-4">
+            <QRCodeSVG value={qrCode} size={200} />
+          </div>
+        )}
 
         <p className="text-sm text-gray-500 mb-1">7天内1小时坐姿检测服务</p>
         <p className="text-sm text-gray-400 mb-6">请用支付宝扫码</p>

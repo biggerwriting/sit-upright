@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timezone, timedelta
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import Order, QuotaPackage
@@ -70,27 +70,19 @@ async def handle_alipay_notify(db: AsyncSession, params: dict) -> bool:
         return True  # 告知支付宝不再重试
 
     result = await db.execute(
-        select(Order).where(Order.out_trade_no == out_trade_no)
+        update(Order)
+        .where(Order.out_trade_no == out_trade_no, Order.quota_granted == False)
+        .values(status="paid", quota_granted=True, paid_at=datetime.now(timezone.utc))
+        .returning(Order)
     )
-    order = result.scalar_one_or_none()
-    if not order:
-        return True
-
-    if order.quota_granted:
-        return True  # 幂等：已充值，直接成功
-
-    # 充值
+    updated_order = result.scalar_one_or_none()
+    if not updated_order:
+        # Either order not found or already granted (quota_granted was True)
+        return True  # Idempotent
+    # Now safely insert QuotaPackage
     now = datetime.now(timezone.utc)
     expires = now + timedelta(days=PRODUCT_QUOTA_EXPIRE_DAYS)
-    pkg = QuotaPackage(
-        user_id=order.user_id,
-        remaining_seconds=PRODUCT_QUOTA_SECONDS,
-        expires_at=expires,
-    )
+    pkg = QuotaPackage(user_id=updated_order.user_id, remaining_seconds=PRODUCT_QUOTA_SECONDS, expires_at=expires)
     db.add(pkg)
-
-    order.status = "paid"
-    order.quota_granted = True
-    order.paid_at = now
     await db.commit()
     return True

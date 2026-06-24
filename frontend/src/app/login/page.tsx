@@ -18,9 +18,13 @@ export default function LoginPage() {
     setLoading(true)
     try {
       await login(email, password)
-      const params = new URLSearchParams(window.location.search)
-      const redirect = params.get('redirect') || '/app'
-      router.push(redirect)
+      const searchParams = new URLSearchParams(window.location.search)
+      const redirectTo = searchParams.get('redirect')
+      // Validate: must start with '/' and not be a protocol-relative URL
+      const safeRedirect = redirectTo && redirectTo.startsWith('/') && !redirectTo.startsWith('//')
+        ? redirectTo
+        : '/app'
+      router.push(safeRedirect)
     } catch {
       setError('邮箱或密码错误，请重试')
     } finally {
