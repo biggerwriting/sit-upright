@@ -117,7 +117,7 @@ export default function AppPage() {
       {/* 控制按钮 */}
       <div className="flex justify-center pb-6">
         <SessionControls
-          status={pageStatus}
+          status={mediaPipe.status !== 'ready' && pageStatus === 'idle' ? 'loading' : pageStatus}
           onStart={startSession}
           onStop={stopSession}
         />
