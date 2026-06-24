@@ -62,7 +62,7 @@ export const api = {
 
   // ── 会话（子系统 1 原有）────────────────────────────────────
   getQuota(): Promise<QuotaInfo> {
-    if (MOCK) return Promise.resolve({ remainingSeconds: 300 })
+    if (MOCK) return Promise.resolve({ remainingSeconds: 300, nearExpiry: null })
     return request<QuotaInfo>('/quota')
   },
 
