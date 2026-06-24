@@ -58,7 +58,7 @@ async def login(
 
 @router.post("/logout", response_model=OkResponse)
 async def logout(response: Response):
-    response.delete_cookie(key="token", path="/")
+    response.delete_cookie(key="token", path="/", samesite="lax")
     return OkResponse()
 
 
