@@ -17,6 +17,7 @@ class User(Base):
     reset_tokens: Mapped[list["PasswordResetToken"]] = relationship(back_populates="user")
     quota_packages: Mapped[list["QuotaPackage"]] = relationship("QuotaPackage", back_populates="user")
     sessions: Mapped[list["Session"]] = relationship("Session", back_populates="user")
+    orders: Mapped[list["Order"]] = relationship("Order", back_populates="user")
 
 
 class PasswordResetToken(Base):
@@ -56,3 +57,20 @@ class Session(Base):
     ended_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     user: Mapped["User"] = relationship("User", back_populates="sessions")
+
+
+class Order(Base):
+    __tablename__ = "orders"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    out_trade_no: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    amount_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String, nullable=False, default="pending")
+    quota_granted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    user: Mapped["User"] = relationship("User", back_populates="orders")

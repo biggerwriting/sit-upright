@@ -93,3 +93,13 @@ class SessionListItem(BaseModel):
 class SessionListResponse(BaseModel):
     sessions: list[SessionListItem]
     hasMore: bool
+
+
+class CreateOrderResponse(BaseModel):
+    orderId: str
+    qrCode: str
+
+
+class OrderResponse(BaseModel):
+    id: str
+    status: str  # "pending" | "paid" | "failed"
