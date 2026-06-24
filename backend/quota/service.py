@@ -15,6 +15,14 @@ NEAR_EXPIRY_DAYS = 3
 
 async def provision_free_trial(db: AsyncSession, user_id: int) -> None:
     """注册时发放 5 分钟免费试用（永不过期）。"""
+    result = await db.execute(
+        select(QuotaPackage).where(
+            QuotaPackage.user_id == user_id,
+            QuotaPackage.expires_at.is_(None),
+        )
+    )
+    if result.scalar_one_or_none():
+        return  # already provisioned
     pkg = QuotaPackage(user_id=user_id, remaining_seconds=FREE_TRIAL_SECONDS, expires_at=None)
     db.add(pkg)
     await db.commit()
@@ -46,7 +54,7 @@ async def get_quota(db: AsyncSession, user_id: int) -> QuotaResponse:
     near_expiry: NearExpiry | None = None
     threshold = now + timedelta(days=NEAR_EXPIRY_DAYS)
     for pkg in packages:  # 已按 expires_at ASC NULLS LAST 排序
-        if pkg.expires_at is not None:
+        if pkg.expires_at is not None and pkg.remaining_seconds > 0:
             expires = pkg.expires_at
             if expires.tzinfo is None:
                 expires = expires.replace(tzinfo=timezone.utc)
@@ -79,13 +87,12 @@ async def deduct_quota(db: AsyncSession, user_id: int, delta: int) -> bool:
         pkg.remaining_seconds -= deduct
         remaining -= deduct
 
-    await db.commit()
     return True
 
 
 async def create_session(db: AsyncSession, user_id: int) -> Session:
     quota = await get_quota(db, user_id)
-    if quota.remainingSeconds == 0:
+    if quota.remainingSeconds <= 0:
         raise HTTPException(status_code=402, detail="配额不足，请购买套餐")
     sess = Session(
         id=str(uuid.uuid4()),
@@ -115,6 +122,9 @@ async def update_session(
     old_total = sess.good_seconds + sess.bad_seconds
     new_total = good_seconds + bad_seconds
     delta = new_total - old_total
+
+    if delta < 0:
+        raise HTTPException(status_code=400, detail="坐姿秒数不可递减")
 
     if delta > 0:
         ok = await deduct_quota(db, user_id, delta)
