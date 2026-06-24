@@ -3,7 +3,7 @@ import type { QuotaBannerProps } from './types'
 
 function formatDate(iso: string): string {
   const d = new Date(iso)
-  return `${d.getMonth() + 1}月${d.getDate()}日`
+  return `${d.getUTCMonth() + 1}月${d.getUTCDate()}日`
 }
 
 export function QuotaBanner({ remainingSeconds, nearExpiry }: QuotaBannerProps) {

@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, timezone, timedelta
 
 from fastapi import HTTPException
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import QuotaPackage, Session
@@ -28,7 +28,7 @@ async def provision_free_trial(db: AsyncSession, user_id: int) -> None:
     await db.commit()
 
 
-async def _valid_packages_query(user_id: int, now: datetime):
+def _valid_packages_query(user_id: int, now: datetime):
     """构建查询：该用户所有未过期套餐（expires_at > now 或 NULL）。"""
     return (
         select(QuotaPackage)
@@ -45,7 +45,7 @@ async def _valid_packages_query(user_id: int, now: datetime):
 
 async def get_quota(db: AsyncSession, user_id: int) -> QuotaResponse:
     now = datetime.now(timezone.utc)
-    result = await db.execute(await _valid_packages_query(user_id, now))
+    result = await db.execute(_valid_packages_query(user_id, now))
     packages = result.scalars().all()
 
     total = sum(p.remaining_seconds for p in packages)
@@ -70,29 +70,42 @@ async def deduct_quota(db: AsyncSession, user_id: int, delta: int) -> bool:
     if delta <= 0:
         return True
     now = datetime.now(timezone.utc)
-    result = await db.execute(await _valid_packages_query(user_id, now))
+    result = await db.execute(_valid_packages_query(user_id, now))
     packages = result.scalars().all()
 
-    # 先检查总量，不足则直接返回 False，不修改任何对象
-    total = sum(p.remaining_seconds for p in packages)
+    # 单次遍历：同时累计总量并记录扣减计划，不足则不修改任何对象
+    plan: list[tuple] = []
+    total = 0
+    remaining = delta
+    for pkg in packages:
+        take = min(remaining, pkg.remaining_seconds)
+        plan.append((pkg, take))
+        total += pkg.remaining_seconds
+        remaining -= take
+        if remaining == 0:
+            break
+
     if total < delta:
         return False
 
-    # 总量充足，再按顺序扣减
-    remaining = delta
-    for pkg in packages:
-        if remaining <= 0:
-            break
-        deduct = min(remaining, pkg.remaining_seconds)
-        pkg.remaining_seconds -= deduct
-        remaining -= deduct
+    for pkg, take in plan:
+        pkg.remaining_seconds -= take
 
     return True
 
 
 async def create_session(db: AsyncSession, user_id: int) -> Session:
-    quota = await get_quota(db, user_id)
-    if quota.remainingSeconds <= 0:
+    now = datetime.now(timezone.utc)
+    total_result = await db.execute(
+        select(func.coalesce(func.sum(QuotaPackage.remaining_seconds), 0)).where(
+            QuotaPackage.user_id == user_id,
+            or_(
+                QuotaPackage.expires_at > now,
+                QuotaPackage.expires_at.is_(None),
+            ),
+        )
+    )
+    if (total_result.scalar() or 0) <= 0:
         raise HTTPException(status_code=402, detail="配额不足，请购买套餐")
     sess = Session(
         id=str(uuid.uuid4()),
