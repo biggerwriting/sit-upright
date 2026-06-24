@@ -73,11 +73,25 @@ export function useMediaPipe(
 
     const loop = () => {
       if (!landmarkerRef.current) return
+
+      // 等待视频第一帧就绪（readyState < 2 或尺寸为 0 时跳过）
+      if (video.readyState < 2 || video.videoWidth === 0) {
+        rafRef.current = requestAnimationFrame(loop)
+        return
+      }
+
       canvas.width  = video.videoWidth
       canvas.height = video.videoHeight
       const tsMs = performance.now() - startTimeRef.current
 
-      const result = landmarkerRef.current.detectForVideo(video, tsMs)
+      let result: ReturnType<PoseLandmarker['detectForVideo']>
+      try {
+        result = landmarkerRef.current.detectForVideo(video, tsMs)
+      } catch {
+        // 时间戳异常或帧未就绪时跳过本帧
+        rafRef.current = requestAnimationFrame(loop)
+        return
+      }
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
       if (result.landmarks.length > 0) {
