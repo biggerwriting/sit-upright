@@ -1,15 +1,16 @@
 # backend/quota/router.py
-from fastapi import APIRouter, Depends
+from datetime import datetime
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
 from auth.dependencies import get_current_user
 from models import User
-from quota.service import get_quota, create_session, update_session, end_session
+from quota.service import get_quota, create_session, update_session, end_session, list_sessions as _list_sessions
 from schemas import (
     QuotaResponse, CreateSessionResponse,
     UpdateSessionRequest, UpdateSessionResponse, SessionStatsResponse,
-    SessionStatsSegment,
+    SessionStatsSegment, SessionListResponse,
 )
 
 router = APIRouter(tags=["quota"])
@@ -30,6 +31,16 @@ async def create_session_endpoint(
 ):
     sess = await create_session(db, current_user.id)
     return CreateSessionResponse(sessionId=sess.id)
+
+
+@router.get("/sessions", response_model=SessionListResponse)
+async def get_sessions(
+    limit: int = Query(default=10, ge=1, le=50),
+    before: datetime | None = None,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await _list_sessions(db, current_user.id, limit=limit, before=before)
 
 
 @router.patch("/sessions/{session_id}", response_model=UpdateSessionResponse)
