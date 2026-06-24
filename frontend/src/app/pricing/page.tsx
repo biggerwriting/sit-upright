@@ -15,7 +15,7 @@ export default function PricingPage() {
 
   async function handleBuy() {
     if (!user) {
-      router.push('/login')
+      router.push('/login?redirect=/pricing')
       return
     }
     setError('')

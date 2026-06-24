@@ -18,7 +18,9 @@ export default function LoginPage() {
     setLoading(true)
     try {
       await login(email, password)
-      router.push('/app')
+      const params = new URLSearchParams(window.location.search)
+      const redirect = params.get('redirect') || '/app'
+      router.push(redirect)
     } catch {
       setError('邮箱或密码错误，请重试')
     } finally {

@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { api } from '@/lib/api'
 
@@ -14,6 +14,7 @@ const POLL_INTERVAL_MS = 3000
 
 export function PaymentModal({ orderId, qrCode, onClose, onSuccess }: Props) {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [failed, setFailed] = useState(false)
 
   const stopPolling = useCallback(() => {
     if (timerRef.current) {
@@ -29,6 +30,10 @@ export function PaymentModal({ orderId, qrCode, onClose, onSuccess }: Props) {
         if (order.status === 'paid') {
           stopPolling()
           onSuccess()
+        } else if (order.status === 'failed') {
+          stopPolling()
+          // Show error state
+          setFailed(true)
         }
       } catch {
         // 轮询失败静默处理
@@ -51,18 +56,33 @@ export function PaymentModal({ orderId, qrCode, onClose, onSuccess }: Props) {
         <p className="text-sm text-gray-500 mb-1">7天内1小时坐姿检测服务</p>
         <p className="text-sm text-gray-400 mb-6">请用支付宝扫码</p>
 
-        <div className="flex items-center justify-center gap-2 text-gray-400 text-sm mb-4">
-          <span className="animate-spin">○</span>
-          <span>等待支付…</span>
-        </div>
+        {failed ? (
+          <div className="mb-4">
+            <p className="text-red-500 text-sm mb-2">支付失败，请重新尝试</p>
+            <button
+              onClick={() => { stopPolling(); onClose() }}
+              className="text-sm text-gray-400 hover:text-gray-600 transition"
+              aria-label="关闭"
+            >
+              关闭
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-center gap-2 text-gray-400 text-sm mb-4">
+              <span className="animate-spin">○</span>
+              <span>等待支付…</span>
+            </div>
 
-        <button
-          onClick={() => { stopPolling(); onClose() }}
-          className="text-sm text-gray-400 hover:text-gray-600 transition"
-          aria-label="关闭"
-        >
-          关闭
-        </button>
+            <button
+              onClick={() => { stopPolling(); onClose() }}
+              className="text-sm text-gray-400 hover:text-gray-600 transition"
+              aria-label="关闭"
+            >
+              关闭
+            </button>
+          </>
+        )}
       </div>
     </div>
   )
