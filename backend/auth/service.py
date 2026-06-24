@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import User, PasswordResetToken
 from auth.utils import hash_password, verify_password, send_reset_email
+from quota.service import provision_free_trial
 
 RESET_TOKEN_EXPIRE_HOURS = 1
 
@@ -21,7 +22,8 @@ async def create_user(db: AsyncSession, email: str, password: str) -> User:
         raise HTTPException(status_code=400, detail="邮箱已注册")
     user = User(email=email, hashed_password=hash_password(password))
     db.add(user)
-    await db.commit()
+    await db.flush()
+    await provision_free_trial(db, user.id)
     await db.refresh(user)
     return user
 

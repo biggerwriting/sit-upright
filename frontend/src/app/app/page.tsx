@@ -13,7 +13,7 @@ import { SessionReport }      from '@/components/detection/SessionReport'
 import { QuotaBanner }        from '@/components/detection/QuotaBanner'
 import { api }                from '@/lib/api'
 import { REPORT_INTERVAL_SECONDS } from '@/lib/constants'
-import type { PostureResult } from '@/types'
+import type { PostureResult, QuotaInfo } from '@/types'
 import type { SessionStats }  from '@/types'
 import type { RefObject }     from 'react'
 
@@ -25,12 +25,13 @@ export default function AppPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   const [pageStatus, setPageStatus]   = useState<PageStatus>('idle')
-  const [quota, setQuota]             = useState<number | null>(null)
+  const [quota, setQuota]             = useState<QuotaInfo | null>(null)
   const [sessionId, setSessionId]     = useState<string | null>(null)
   const [finalStats, setFinalStats]   = useState<SessionStats | null>(null)
   const tickTimerRef                  = useRef<ReturnType<typeof setInterval> | null>(null)
   const reportTimerRef                = useRef<ReturnType<typeof setInterval> | null>(null)
   const lastResultRef                 = useRef<PostureResult>({ isHunching: false, headShoulderDist: 0 })
+  const sessionIdRef                  = useRef<string | null>(null)
 
   const tracker = useSessionTracker()
   const alerts  = useAlertManager()
@@ -51,7 +52,7 @@ export default function AppPage() {
     mediaPipe.initialize()
     api.getQuota().then(q => {
       if (q.remainingSeconds === 0) router.push('/pricing')
-      else setQuota(q.remainingSeconds)
+      else setQuota(q)
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -59,6 +60,7 @@ export default function AppPage() {
     setPageStatus('loading')
     const { sessionId: sid } = await api.createSession()
     setSessionId(sid)
+    sessionIdRef.current = sid
     await mediaPipe.startDetection()
     setPageStatus('running')
 
@@ -74,6 +76,16 @@ export default function AppPage() {
       api.updateSession(sid, {
         goodSeconds: tracker.stats.goodSeconds,
         badSeconds:  tracker.stats.badSeconds,
+      }).catch((err: Error) => {
+        if (err.message.includes('402')) {
+          stopSession()
+          setFinalStats({
+            totalSeconds: tracker.stats.totalSeconds,
+            goodSeconds: tracker.stats.goodSeconds,
+            badSeconds: tracker.stats.badSeconds,
+            segments: tracker.stats.segments,
+          })
+        }
       })
     }, REPORT_INTERVAL_SECONDS * 1000)
   }, [mediaPipe, tracker, alerts])
@@ -84,15 +96,21 @@ export default function AppPage() {
     mediaPipe.stopDetection()
     alerts.reset()
 
-    const stats = await api.endSession(sessionId!)
+    const stats = await api.endSession(sessionIdRef.current!)
+    sessionIdRef.current = null
     setFinalStats(stats)
     setPageStatus('idle')
     tracker.reset()
-  }, [mediaPipe, alerts, tracker, sessionId])
+  }, [mediaPipe, alerts, tracker])
 
   return (
     <div className="min-h-screen flex flex-col">
-      {quota !== null && <QuotaBanner remainingSeconds={quota} />}
+      {quota !== null && (
+        <QuotaBanner
+          remainingSeconds={quota.remainingSeconds}
+          nearExpiry={quota.nearExpiry}
+        />
+      )}
 
       {/* 主内容：桌面左右 / 手机上下 */}
       <main className="flex-1 flex flex-col md:flex-row gap-4 p-4">

@@ -23,8 +23,14 @@ export type SessionStats = {
   segments: Segment[]
 }
 
+export type NearExpiry = {
+  seconds: number
+  expiresAt: string  // ISO 8601
+}
+
 export type QuotaInfo = {
-  remainingSeconds: number  // 剩余配额（秒）
+  remainingSeconds: number
+  nearExpiry: NearExpiry | null
 }
 
 export type SessionId = string

@@ -15,6 +15,8 @@ class User(Base):
         DateTime, default=lambda: datetime.now(timezone.utc)
     )
     reset_tokens: Mapped[list["PasswordResetToken"]] = relationship(back_populates="user")
+    quota_packages: Mapped[list["QuotaPackage"]] = relationship("QuotaPackage", back_populates="user")
+    sessions: Mapped[list["Session"]] = relationship("Session", back_populates="user")
 
 
 class PasswordResetToken(Base):
@@ -27,3 +29,30 @@ class PasswordResetToken(Base):
     used: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     user: Mapped["User"] = relationship(back_populates="reset_tokens")
+
+
+class QuotaPackage(Base):
+    __tablename__ = "quota_packages"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    remaining_seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+
+    user: Mapped["User"] = relationship("User", back_populates="quota_packages")
+
+
+class Session(Base):
+    __tablename__ = "sessions"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)   # UUID string
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    good_seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    bad_seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    started_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    user: Mapped["User"] = relationship("User", back_populates="sessions")

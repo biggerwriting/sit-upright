@@ -1,5 +1,5 @@
 # backend/schemas.py
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class SignupRequest(BaseModel):
@@ -42,3 +42,41 @@ class ResetPasswordRequest(BaseModel):
 
 class OkResponse(BaseModel):
     ok: bool = True
+
+
+from datetime import datetime as dt
+
+
+class NearExpiry(BaseModel):
+    seconds: int
+    expiresAt: dt
+
+
+class QuotaResponse(BaseModel):
+    remainingSeconds: int
+    nearExpiry: NearExpiry | None = None
+
+
+class CreateSessionResponse(BaseModel):
+    sessionId: str
+
+
+class UpdateSessionRequest(BaseModel):
+    goodSeconds: int = Field(ge=0)
+    badSeconds: int = Field(ge=0)
+
+
+class UpdateSessionResponse(BaseModel):
+    ok: bool = True
+
+
+class SessionStatsSegment(BaseModel):
+    type: str            # "good" | "bad"
+    durationSeconds: int
+
+
+class SessionStatsResponse(BaseModel):
+    totalSeconds: int
+    goodSeconds: int
+    badSeconds: int
+    segments: list[SessionStatsSegment]
