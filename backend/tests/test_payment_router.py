@@ -65,4 +65,4 @@ async def test_alipay_notify_invalid_signature(mock_verify, client):
         data={"trade_status": "TRADE_SUCCESS", "out_trade_no": "fake", "sign": "bad"},
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
-    assert r.status_code == 400
+    assert r.status_code == 200

@@ -21,11 +21,7 @@ async def create_order(db: AsyncSession, user_id: int) -> tuple[Order, str]:
     out_trade_no = f"{user_id}_{int(time.time() * 1000)}"
     amount_yuan = f"{PRODUCT_PRICE_CENTS / 100:.2f}"
 
-    try:
-        qr_code = create_qr_code(out_trade_no, amount_yuan, PRODUCT_SUBJECT)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"创建支付订单失败: {e}")
-
+    # Persist order FIRST to avoid orphaned QR codes
     order = Order(
         id=str(uuid.uuid4()),
         user_id=user_id,
@@ -38,6 +34,15 @@ async def create_order(db: AsyncSession, user_id: int) -> tuple[Order, str]:
     db.add(order)
     await db.commit()
     await db.refresh(order)
+
+    try:
+        qr_code = create_qr_code(out_trade_no, amount_yuan, PRODUCT_SUBJECT)
+    except Exception as e:
+        # Mark order as failed so user can see it in history
+        order.status = "failed"
+        await db.commit()
+        raise HTTPException(status_code=500, detail=f"创建支付订单失败: {e}")
+
     return order, qr_code
 
 

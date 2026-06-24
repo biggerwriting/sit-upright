@@ -18,6 +18,8 @@ def create_qr_code(out_trade_no: str, amount_yuan: str, subject: str) -> str:
     if MOCK_MODE:
         return f"mock-alipay-qr://{out_trade_no}"
 
+    # Production: requires alipay-sdk-python-all (not the 'alipay' package)
+    # Install: pip install alipay-sdk-python-all --index-url https://pypi.org/simple/
     from alipay import AliPay  # 延迟导入，避免无凭证时报错
 
     client = AliPay(
@@ -43,6 +45,8 @@ def verify_notify_signature(params: dict) -> bool:
     if MOCK_MODE:
         return True
 
+    # Production: requires alipay-sdk-python-all (not the 'alipay' package)
+    # Install: pip install alipay-sdk-python-all --index-url https://pypi.org/simple/
     from alipay import AliPay
 
     client = AliPay(

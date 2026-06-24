@@ -37,5 +37,7 @@ async def alipay_notify(request: Request, db: AsyncSession = Depends(get_db)):
     params = dict(form_data)
     success = await handle_alipay_notify(db, params)
     if not success:
-        raise HTTPException(status_code=400, detail="签名验证失败")
+        # Log failed signature but return "success" to stop Alipay retries
+        import logging
+        logging.getLogger(__name__).warning("Alipay notify signature verification failed")
     return PlainTextResponse("success")
