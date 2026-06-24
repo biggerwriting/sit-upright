@@ -16,6 +16,7 @@ export type AlertBannerProps = {
 
 export type QuotaBannerProps = {
   remainingSeconds: number
+  nearExpiry: { seconds: number; expiresAt: string } | null
 }
 
 export type SessionControlsProps = {
