@@ -1,9 +1,9 @@
 # /// script
 # requires-python = ">=3.10"
 # dependencies = [
-#     "opencv-python",
-#     "mediapipe",
-#     "numpy",
+#     "opencv-python==4.13.0.92",
+#     "mediapipe==0.10.35",
+#     "numpy==2.4.6",
 # ]
 # ///
 import cv2
@@ -11,17 +11,31 @@ import mediapipe as mp
 import numpy as np
 import urllib.request
 import os
+import sys
 import time
 
 from mediapipe.tasks import python as mp_python
 from mediapipe.tasks.python import vision
 
-# ── 模型下载（只需一次）────────────────────────────────────
-MODEL_PATH = "pose_landmarker_lite.task"
+# ── 模型路径（兼容 PyInstaller 打包后 .app 和开发模式）────────
+if getattr(sys, 'frozen', False):
+    # PyInstaller 打包后，资源文件在 sys._MEIPASS 目录
+    BASE_DIR = sys._MEIPASS
+else:
+    # 开发模式，从脚本同目录读取
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+MODEL_PATH = os.path.join(BASE_DIR, "pose_landmarker_lite.task")
+
 
 def download_model():
     if os.path.exists(MODEL_PATH):
         return
+    if getattr(sys, 'frozen', False):
+        raise FileNotFoundError(
+            f"模型文件未找到：{MODEL_PATH}\n请重新下载应用。"
+        )
+    # 开发模式才走网络下载
     url = (
         "https://storage.googleapis.com/mediapipe-models/"
         "pose_landmarker/pose_landmarker_lite/float16/latest/"
@@ -184,7 +198,12 @@ def run():
                             cv2.FONT_HERSHEY_SIMPLEX, 1.0, (120, 120, 120), 2)
 
             cv2.imshow("Posture Monitor", frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            # 按 Q 键退出，或点击窗口关闭按钮退出
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('q') or key == 27:  # q 或 ESC
+                break
+            # 检测窗口是否被用户关闭（点击红色 × 按钮）
+            if cv2.getWindowProperty("Posture Monitor", cv2.WND_PROP_VISIBLE) < 1:
                 break
 
     cap.release()

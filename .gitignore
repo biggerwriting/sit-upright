@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+
+# 模型文件（大体积二进制，运行时自动下载）
+pose_landmarker_lite.task
+
+# 打包产物
+build/
+dist/
+PostureMonitor.app/
+PostureMonitor.zip
+build_env/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
