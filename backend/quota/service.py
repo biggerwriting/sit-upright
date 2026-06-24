@@ -162,3 +162,50 @@ async def end_session(db: AsyncSession, session_id: str, user_id: int) -> Sessio
     await db.commit()
     await db.refresh(sess)
     return sess
+
+
+from schemas import SessionListItem, SessionListResponse
+
+
+async def list_sessions(
+    db: AsyncSession,
+    user_id: int,
+    limit: int = 10,
+    before: datetime | None = None,
+) -> SessionListResponse:
+    """返回游标分页的已结束会话列表，按 started_at DESC 排序。"""
+    query = (
+        select(Session)
+        .where(
+            Session.user_id == user_id,
+            Session.ended_at.is_not(None),
+        )
+    )
+    if before is not None:
+        before_aware = before if before.tzinfo else before.replace(tzinfo=timezone.utc)
+        query = query.where(Session.started_at < before_aware)
+
+    query = query.order_by(Session.started_at.desc()).limit(limit + 1)
+
+    result = await db.execute(query)
+    rows = result.scalars().all()
+
+    has_more = len(rows) > limit
+    items = rows[:limit]
+
+    def to_item(s: Session) -> SessionListItem:
+        started = s.started_at if s.started_at.tzinfo else s.started_at.replace(tzinfo=timezone.utc)
+        ended = s.ended_at if s.ended_at.tzinfo else s.ended_at.replace(tzinfo=timezone.utc)
+        return SessionListItem(
+            id=s.id,
+            startedAt=started,
+            endedAt=ended,
+            totalSeconds=s.good_seconds + s.bad_seconds,
+            goodSeconds=s.good_seconds,
+            badSeconds=s.bad_seconds,
+        )
+
+    return SessionListResponse(
+        sessions=[to_item(s) for s in items],
+        hasMore=has_more,
+    )
