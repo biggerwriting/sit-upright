@@ -23,3 +23,4 @@ __pycache__/
 backend/.venv/
 backend/.env
 backend/posture.db
+scripts/.env

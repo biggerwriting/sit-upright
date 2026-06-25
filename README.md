@@ -409,3 +409,98 @@ curl -s -b cookies.txt -c cookies.txt \
 sqlite3 backend/posture.db \
   "INSERT INTO quota_packages (user_id, remaining_seconds, expires_at, created_at)
    VALUES (1, 3600, datetime('now', '+7 days'), datetime('now'));"
+
+
+# 本地部署
+本地测试分两部分：后端（Supabase） 先部署一次，前端 用本地 HTTP 服务器跑。
+
+---
+第一步：一次性部署 Supabase
+
+1. 创建项目
+
+去 supabase.com 新建免费项目，等初始化完成（约 1 分钟）。
+
+Settings → API 记下两个值：
+Project URL:       https://xxxxxxxxxxxx.supabase.co
+service_role key:  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...（保密）
+Project Ref:       xxxxxxxxxxxx（URL 里那串字母）
+
+2. 跑 Migration SQL
+
+Supabase 控制台 → SQL Editor → 分别粘贴并执行：
+supabase/migrations/20260625_access_control.sql
+supabase/migrations/20260625_increment_usage_fn.sql
+
+执行后在 Table Editor 里能看到 trials 和 tokens 两张表。
+
+3. 部署三个 Edge Function
+```bash
+# 安装 Supabase CLI（如果没有）
+brew install supabase/tap/supabase
+supabase login
+
+# 部署（把 xxxxxxxxxxxx 换成你的 Project Ref）
+supabase functions deploy check-trial  --no-verify-jwt --project-ref xxxxxxxxxxxx
+supabase functions deploy check-token  --no-verify-jwt --project-ref xxxxxxxxxxxx
+supabase functions deploy update-usage --no-verify-jwt --project-ref xxxxxxxxxxxx
+```
+4. 验证函数部署成功
+
+# 应返回 {"status":"trial","remainingSecs":300}
+```bash
+curl -s -X POST https://xxxxxxxxxxxx.supabase.co/functions/v1/check-trial \
+  -H 'Content-Type: application/json' \
+  -d '{"deviceId":"test-001"}' | python3 -m json.tool
+```
+---
+第二步：配置静态页
+
+编辑 posture-static-demo.html 顶部两行：
+
+const SUPABASE_FUNC_URL = 'https://xxxxxxxxxxxx.supabase.co/functions/v1'
+const WECHAT_ID         = 'your_wechat_id'
+
+---
+第三步：本地跑页面
+
+cd /Users/tongqianwen/ExpProjects/learn/good-sit
+python3 -m http.server 8080
+
+打开 http://localhost:8080/posture-static-demo.html
+
+---
+测试场景
+
+场景 1：试用流程
+
+直接打开页面，应看到：
+- 短暂转圈 → 顶部出现黄色「⏱ 试用剩余：5 分 0 秒」
+- 开始检测，计时器每秒递减
+- 5 分钟后自动停止，显示付款引导（显示你填的微信号）
+
+场景 2：生成并使用付费链接
+```bash
+cd scripts
+cp .env.example .env
+# 编辑 .env，填入 Supabase URL、service_role key、SITE_URL=http://localhost:8080
+npm install
+node generate-token.js 120 1 "本地测试"
+```
+输出一条链接，复制后在浏览器打开：
+http://localhost:8080/posture-static-demo.html?token=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+
+应看到：
+- 顶部出现白色「⏳ 配额剩余：2 分 0 秒」
+- 开始检测，配额每秒递减
+- 2 分钟后自动停止，显示付款引导
+
+场景 3：验证无效链接
+
+打开：http://localhost:8080/posture-static-demo.html?token=fake-token
+应显示：「❌ 无法访问 — 链接无效」
+
+场景 4：试用结束后再试（清 localStorage）
+
+浏览器 DevTools → Application → Local Storage → 删除 posture_device_id 键 → 刷新
+可重置试用计时器（模拟新设备）。
