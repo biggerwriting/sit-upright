@@ -560,6 +560,17 @@ function tick() {
     segments.push({ type, dur: 1 })
   }
   renderTimeline(timelineEl, segments)
+
+  // 配额倒计时（试用和 token 模式都递减）
+  if (running && quotaSecs > 0) {
+    quotaSecs--
+    updateQuotaBar()
+    if (quotaSecs === 0) {
+      stopDetection()
+      document.getElementById('paywall-wechat').textContent = WECHAT_ID
+      showOverlay('paywall')
+    }
+  }
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -633,6 +644,22 @@ async function startDetection() {
   detectTimer = setInterval(loop, 200)  // 5fps，后台节流到 1fps 也够用
   tickTimer   = setInterval(tick, 1000)
 
+  // 仅 token 模式每 30s 上报用量到后端
+  if (accessMode === 'token' && activeToken) {
+    reportTimer = setInterval(async () => {
+      const res = await fetch(`${SUPABASE_FUNC_URL}/update-usage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: activeToken, seconds: 30 }),
+      }).then(r => r.json()).catch(() => null)
+      if (res?.status === 'exhausted') {
+        stopDetection()
+        document.getElementById('paywall-wechat').textContent = WECHAT_ID
+        showOverlay('paywall')
+      }
+    }, 30_000)
+  }
+
   btn.textContent = '停止检测'
   btn.className = 'stop'
   btn.disabled = false
@@ -642,6 +669,7 @@ function stopDetection() {
   running = false
   if (detectTimer) { clearInterval(detectTimer); detectTimer = null }
   if (tickTimer)   { clearInterval(tickTimer);   tickTimer   = null }
+  if (reportTimer) { clearInterval(reportTimer); reportTimer = null }
 
   // 关闭摄像头
   const stream = video.srcObject
