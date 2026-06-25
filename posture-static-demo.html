@@ -191,6 +191,14 @@
     color: #4ade80;
     letter-spacing: .05em;
   }
+  .auth-card .wx-qr {
+    width: 140px;
+    height: 140px;
+    border-radius: 10px;
+    margin: 0 auto;
+    object-fit: cover;
+    border: 2px solid #1e293b;
+  }
   .spinner {
     width: 36px; height: 36px;
     border: 3px solid #334155;
@@ -243,7 +251,8 @@
   <!-- paywall：试用结束 -->
   <div id="state-paywall" class="auth-card" style="display:none">
     <h2>⏱️ 免费试用已结束</h2>
-    <p>加小助理微信，转账后发给你访问链接：</p>
+    <p>扫码加微信，转账后发给你访问链接：</p>
+    <img src="./assets/wx.jpg" alt="微信二维码" class="wx-qr" />
     <p class="wechat-id" id="paywall-wechat"></p>
     <p style="font-size:.75rem;color:#475569">
       购买后你会收到一条专属链接，打开即可继续使用
@@ -253,6 +262,7 @@
   <div id="state-invalid" class="auth-card" style="display:none">
     <h2>❌ 无法访问</h2>
     <p id="invalid-msg"></p>
+    <img src="./assets/wx.jpg" alt="微信二维码" class="wx-qr" />
     <p style="font-size:.75rem;color:#475569">
       需要新链接请联系：<span id="invalid-wechat" style="color:#4ade80;font-weight:700"></span>
     </p>
