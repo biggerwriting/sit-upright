@@ -193,7 +193,19 @@
   <div id="timeline"></div>
 </div>
 
-<button id="btn" class="start" disabled>正在加载模型…</button>
+<!-- 预加载音频（DOM 元素比 new Audio() 在定时器里更可靠） -->
+<audio id="alert-audio" src="./audio/posture-alert.mp3" preload="auto"></audio>
+
+<div style="display:flex;gap:10px;align-items:center">
+  <button id="btn" class="start" disabled>正在加载模型…</button>
+  <button id="test-audio-btn"
+    style="padding:10px 18px;border:none;border-radius:999px;background:#334155;
+           color:#94a3b8;font-size:.85rem;cursor:pointer"
+    title="验证音频文件是否可以播放">
+    🔊 测试音效
+  </button>
+</div>
+<div id="audio-status" style="font-size:.75rem;color:#64748b;height:1.2em"></div>
 
 <!-- 结束报告弹窗 -->
 <div id="overlay">
@@ -242,16 +254,19 @@ const KEY_IDXS = [0,11,12,23,24,25,26,27,28]
 // ──────────────────────────────────────────────────────────────
 // 2. DOM 引用
 // ──────────────────────────────────────────────────────────────
-const video      = document.getElementById('video')
-const canvas     = document.getElementById('canvas')
-const ctx        = canvas.getContext('2d')
-const badge      = document.getElementById('status-badge')
-const btn        = document.getElementById('btn')
-const goodEl     = document.getElementById('good-secs')
-const badEl      = document.getElementById('bad-secs')
-const totalEl    = document.getElementById('total-secs')
-const timelineEl = document.getElementById('timeline')
-const overlay    = document.getElementById('overlay')
+const video          = document.getElementById('video')
+const canvas         = document.getElementById('canvas')
+const ctx            = canvas.getContext('2d')
+const badge          = document.getElementById('status-badge')
+const btn            = document.getElementById('btn')
+const testAudioBtn   = document.getElementById('test-audio-btn')
+const audioStatusEl  = document.getElementById('audio-status')
+const alertAudio     = document.getElementById('alert-audio')   // 预加载的 <audio> 元素
+const goodEl         = document.getElementById('good-secs')
+const badEl          = document.getElementById('bad-secs')
+const totalEl        = document.getElementById('total-secs')
+const timelineEl     = document.getElementById('timeline')
+const overlay        = document.getElementById('overlay')
 
 // ──────────────────────────────────────────────────────────────
 // 3. 状态
@@ -289,12 +304,37 @@ function analyzePosture(lms) {
 // ──────────────────────────────────────────────────────────────
 // 5. 语音提醒
 // ──────────────────────────────────────────────────────────────
-function playAudio() {
-  const audio = new Audio(AUDIO_PATH)
-  audio.play().catch(() => {
-    // 浏览器自动播放策略拒绝时静默处理（用户未交互过页面时会触发）
-  })
+
+// 显示音频状态（页面可见，方便诊断）
+function setAudioStatus(msg, isError = false) {
+  audioStatusEl.textContent = msg
+  audioStatusEl.style.color = isError ? '#f87171' : '#4ade80'
+  // 3 秒后清除
+  setTimeout(() => { audioStatusEl.textContent = '' }, 3000)
 }
+
+// 用预加载的 DOM <audio> 元素播放，比 setInterval 里 new Audio() 更可靠
+function playAudio() {
+  console.log('[posture] playAudio() triggered, continuousBad =', continuousBad)
+  alertAudio.currentTime = 0
+  alertAudio.play()
+    .then(() => {
+      console.log('[posture] audio play succeeded')
+      setAudioStatus('🔔 语音提醒已播放')
+    })
+    .catch(err => {
+      console.error('[posture] audio play failed:', err.name, err.message)
+      setAudioStatus(`⚠️ 播放失败：${err.name}`, true)
+    })
+}
+
+// 「测试音效」按钮 — 直接在用户手势上下文里播放，排查文件/权限问题
+testAudioBtn.addEventListener('click', () => {
+  alertAudio.currentTime = 0
+  alertAudio.play()
+    .then(() => setAudioStatus('✅ 音效正常'))
+    .catch(err => setAudioStatus(`❌ ${err.name}: ${err.message}`, true))
+})
 
 // ──────────────────────────────────────────────────────────────
 // 6. 时间轴渲染
