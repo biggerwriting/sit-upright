@@ -260,11 +260,11 @@ const overlay        = document.getElementById('overlay')
 // ──────────────────────────────────────────────────────────────
 // 3. 状态
 // ──────────────────────────────────────────────────────────────
-let landmarker   = null
-let rafId        = null
-let tickTimer    = null
-let running      = false
-let lastIsHunch  = false         // 上一帧推理结果（供 tick 读取）
+let landmarker    = null
+let detectTimer   = null         // setInterval 推理循环句柄（替代 rAF，后台可用）
+let tickTimer     = null
+let running       = false
+let lastIsHunch   = false        // 上一帧推理结果（供 tick 读取）
 
 // 统计（每秒更新）
 let goodSecs      = 0
@@ -365,13 +365,11 @@ function tick() {
 }
 
 // ──────────────────────────────────────────────────────────────
-// 7. 推理循环（rAF）
+// 7. 推理循环（setInterval 200ms ≈ 5fps，后台标签页仍可运行）
 // ──────────────────────────────────────────────────────────────
 function loop() {
   if (!landmarker || !running) return
-  if (video.readyState < 2 || video.videoWidth === 0) {
-    rafId = requestAnimationFrame(loop); return
-  }
+  if (video.readyState < 2 || video.videoWidth === 0) return
 
   canvas.width  = video.videoWidth
   canvas.height = video.videoHeight
@@ -379,7 +377,7 @@ function loop() {
 
   let result
   try { result = landmarker.detectForVideo(video, tsMs) }
-  catch { rafId = requestAnimationFrame(loop); return }
+  catch { return }
 
   ctx.clearRect(0, 0, canvas.width, canvas.height)
 
@@ -405,8 +403,6 @@ function loop() {
 
     lastIsHunch = analyzePosture(lms)
   }
-
-  rafId = requestAnimationFrame(loop)
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -436,9 +432,8 @@ async function startDetection() {
   timelineEl.innerHTML = ''
 
   running = true
-  rafId = requestAnimationFrame(loop)
-
-  tickTimer = setInterval(tick, 1000)
+  detectTimer = setInterval(loop, 200)  // 5fps，后台节流到 1fps 也够用
+  tickTimer   = setInterval(tick, 1000)
 
   btn.textContent = '停止检测'
   btn.className = 'stop'
@@ -447,8 +442,8 @@ async function startDetection() {
 
 function stopDetection() {
   running = false
-  if (rafId) { cancelAnimationFrame(rafId); rafId = null }
-  if (tickTimer) { clearInterval(tickTimer); tickTimer = null }
+  if (detectTimer) { clearInterval(detectTimer); detectTimer = null }
+  if (tickTimer)   { clearInterval(tickTimer);   tickTimer   = null }
 
   // 关闭摄像头
   const stream = video.srcObject
