@@ -1,0 +1,9 @@
+{
+  "name": "posture-scripts",
+  "version": "1.0.0",
+  "description": "激活链接生成工具",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0",
+    "dotenv": "^16.0.0"
+  }
+}
