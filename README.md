@@ -158,6 +158,81 @@ python3 -m http.server 8080
 | **语音重复间隔** | 连续弓腰满 5 秒首次响铃，之后保持弓腰每隔 30 秒再次响铃；坐正后计数重置，下次弓腰重新从 5 秒开始计。 |
 | **替换提示音** | 将 `audio/posture-alert.mp3` 替换成任意 MP3 文件即可自定义提示音，无需修改代码。 |
 
+### 付费访问与部署
+
+#### 架构概览
+
+```
+用户浏览器 → Netlify（静态页）→ Supabase Edge Functions → Supabase DB
+```
+
+#### 一次性部署步骤
+
+**1. 准备 Supabase 项目**
+
+1. 在 [supabase.com](https://supabase.com) 新建项目（免费）
+2. SQL Editor → 粘贴并执行 `supabase/migrations/20260625_access_control.sql`
+3. Settings → API → 复制 Project URL 和 `service_role` Key
+
+**2. 部署 Edge Functions**
+
+```bash
+# 安装 Supabase CLI（若未安装）
+brew install supabase/tap/supabase
+
+# 登录
+supabase login
+
+# 部署三个函数
+supabase functions deploy check-trial  --no-verify-jwt --project-ref YOUR_PROJECT_REF
+supabase functions deploy check-token  --no-verify-jwt --project-ref YOUR_PROJECT_REF
+supabase functions deploy update-usage --no-verify-jwt --project-ref YOUR_PROJECT_REF
+```
+
+**3. 配置静态页**
+
+编辑 `posture-static-demo.html` 顶部两行：
+
+```js
+const SUPABASE_FUNC_URL = 'https://YOUR_PROJECT_REF.supabase.co/functions/v1'
+const WECHAT_ID         = 'your_wechat_id'
+```
+
+**4. 部署到 Netlify**
+
+1. 将代码推送到 GitHub
+2. Netlify → Add new site → Import from Git → 选择仓库
+3. Build settings：Build command 留空，Publish directory 填 `.`
+4. Deploy site
+
+**5. 配置生成脚本**
+
+```bash
+cd scripts
+cp .env.example .env   # 填入 Supabase URL、service_role key、Netlify 站点 URL
+npm install
+```
+
+#### 日常操作：收款后生成激活链接
+
+```bash
+cd scripts
+# node generate-token.js <配额秒数> <有效天数> "<备注>"
+node generate-token.js 7200 30 "张三 ¥29 2026-06-25"
+```
+
+输出的链接直接发给用户即可，用户打开链接就能使用。
+
+#### 访问控制逻辑
+
+| 情况 | 行为 |
+|------|------|
+| 首次访问（无 token） | 5 分钟免费试用，刷新不重置 |
+| 试用结束 | 显示微信付款引导 |
+| 带有效 token 访问 | 显示剩余配额，可正常检测 |
+| Token 过期或用完 | 提示联系购买 |
+| 后台超 5 分钟 | 定时器节流，检测变慢（同现有说明）|
+
 # 提高依赖库下载速度
 换清华镜像源
 
