@@ -410,6 +410,83 @@ nav {
 .step h3 { font-size: .95rem; font-weight: 700; margin-bottom: 8px; }
 .step p   { font-size: .85rem; color: var(--muted); }
 
+/* ── 定价 ── */
+.pricing { padding: 80px 0; }
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  max-width: 860px;
+  margin: 0 auto;
+}
+.plan-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative;
+  transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+}
+.plan-card:hover { transform: translateY(-4px); }
+.plan-card.featured {
+  border-color: var(--cyan);
+  box-shadow: 0 0 32px rgba(34,211,238,.12);
+}
+.plan-badge {
+  position: absolute;
+  top: -12px; left: 50%; transform: translateX(-50%);
+  background: linear-gradient(135deg, #22d3ee, #4ade80);
+  color: #080d14;
+  font-size: .7rem; font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 3px 14px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.plan-name {
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.plan-price .amount {
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1;
+}
+.plan-price .currency { font-size: 1.2rem; color: var(--muted); }
+.plan-divider { height: 1px; background: var(--border); }
+.plan-specs { display: flex; flex-direction: column; gap: 10px; }
+.plan-spec {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: .88rem;
+}
+.plan-spec-icon { width: 20px; text-align: center; flex-shrink: 0; }
+.plan-spec-val { color: var(--text); font-weight: 600; }
+.plan-spec-label { color: var(--muted); }
+.plan-per-hour {
+  font-size: .75rem;
+  color: var(--muted);
+  text-align: center;
+  padding: 8px 12px;
+  background: rgba(255,255,255,.03);
+  border-radius: 8px;
+}
+.plan-per-hour strong { color: var(--green); }
+
 /* ── CTA ── */
 .cta-section {
   padding: 100px 0;
@@ -464,7 +541,11 @@ footer a:hover { color: var(--cyan); }
 <nav>
   <div class="container nav-inner">
     <a href="/" class="logo">🪑 坐姿<span>检测</span></a>
-    <a href="posture-static-demo.html" class="btn btn-primary nav-cta">免费试用</a>
+    <div style="display:flex;align-items:center;gap:20px">
+      <a href="#pricing" style="font-size:.9rem;color:var(--muted);text-decoration:none;transition:color .2s"
+         onmouseover="this.style.color='var(--cyan)'" onmouseout="this.style.color='var(--muted)'">定价</a>
+      <a href="posture-static-demo.html" class="btn btn-primary nav-cta">免费试用</a>
+    </div>
   </div>
 </nav>
 
@@ -670,6 +751,95 @@ footer a:hover { color: var(--cyan); }
   </div>
 </section>
 
+<!-- 定价 -->
+<section class="pricing" id="pricing">
+  <div class="container">
+    <div class="section-header">
+      <div class="tag">套餐价格</div>
+      <h2>按需购买，没有订阅</h2>
+      <p>一次购买，用完为止，不自动续费。加微信转账后，发给你专属访问链接。</p>
+    </div>
+    <div class="pricing-grid">
+
+      <!-- 套餐 1 -->
+      <div class="plan-card">
+        <div class="plan-name">入门体验</div>
+        <div class="plan-price">
+          <span class="currency">¥</span>
+          <span class="amount">3</span>
+        </div>
+        <div class="plan-divider"></div>
+        <div class="plan-specs">
+          <div class="plan-spec">
+            <span class="plan-spec-icon">⏱</span>
+            <span class="plan-spec-val">3 小时</span>
+            <span class="plan-spec-label">检测用量</span>
+          </div>
+          <div class="plan-spec">
+            <span class="plan-spec-icon">📅</span>
+            <span class="plan-spec-val">7 天</span>
+            <span class="plan-spec-label">链接有效期</span>
+          </div>
+        </div>
+        <div class="plan-per-hour">约 <strong>¥1 / 小时</strong></div>
+      </div>
+
+      <!-- 套餐 2（推荐） -->
+      <div class="plan-card featured">
+        <div class="plan-badge">🔥 最受欢迎</div>
+        <div class="plan-name">标准使用</div>
+        <div class="plan-price">
+          <span class="currency">¥</span>
+          <span class="amount">24</span>
+        </div>
+        <div class="plan-divider"></div>
+        <div class="plan-specs">
+          <div class="plan-spec">
+            <span class="plan-spec-icon">⏱</span>
+            <span class="plan-spec-val">60 小时</span>
+            <span class="plan-spec-label">检测用量</span>
+          </div>
+          <div class="plan-spec">
+            <span class="plan-spec-icon">📅</span>
+            <span class="plan-spec-val">14 天</span>
+            <span class="plan-spec-label">链接有效期</span>
+          </div>
+        </div>
+        <div class="plan-per-hour">约 <strong>¥0.40 / 小时</strong>，省 60%</div>
+      </div>
+
+      <!-- 套餐 3 -->
+      <div class="plan-card">
+        <div class="plan-name">长期坚持</div>
+        <div class="plan-price">
+          <span class="currency">¥</span>
+          <span class="amount">30</span>
+        </div>
+        <div class="plan-divider"></div>
+        <div class="plan-specs">
+          <div class="plan-spec">
+            <span class="plan-spec-icon">⏱</span>
+            <span class="plan-spec-val">300 小时</span>
+            <span class="plan-spec-label">检测用量</span>
+          </div>
+          <div class="plan-spec">
+            <span class="plan-spec-icon">📅</span>
+            <span class="plan-spec-val">30 天</span>
+            <span class="plan-spec-label">链接有效期</span>
+          </div>
+        </div>
+        <div class="plan-per-hour">约 <strong>¥0.10 / 小时</strong>，最超值</div>
+      </div>
+
+    </div>
+
+    <p style="text-align:center;margin-top:32px;font-size:.85rem;color:var(--muted)">
+      购买前可先免费试用 5 分钟 ·
+      <a href="posture-static-demo.html" style="color:var(--cyan);text-decoration:none">立即体验 →</a>
+    </p>
+  </div>
+</section>
+
 <!-- CTA -->
 <section class="cta-section">
   <div class="container">
@@ -682,7 +852,7 @@ footer a:hover { color: var(--cyan); }
     </div>
     <div class="pricing-note">
       <span>5 分钟免费 · 到期后购买套餐继续使用</span>
-      <span>购买方式：加微信联系，转账后发送专属访问链接</span>
+      <span>购买方式：加小助理微信联系，转账后发送专属访问链接</span>
     </div>
   </div>
 </section>

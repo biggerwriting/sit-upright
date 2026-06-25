@@ -27,5 +27,5 @@ Deno.serve(async (req) => {
   const remainingSecs = record.quota_secs - record.used_secs
   if (remainingSecs <= 0) return json({ status: 'exhausted' })
 
-  return json({ status: 'valid', remainingSecs })
+  return json({ status: 'valid', remainingSecs, expiresAt: record.expires_at })
 })

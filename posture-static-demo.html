@@ -212,6 +212,16 @@
   #quota-bar.show { display: block; }
   #quota-bar.trial-mode { color: #facc15; }
   #quota-bar.low        { color: #f87171; font-weight: 600; }
+
+  /* ── 到期提示条 ── */
+  #expiry-bar {
+    display: none;
+    font-size: .75rem;
+    color: #475569;
+    text-align: center;
+    padding: 2px 0 4px;
+  }
+  #expiry-bar.show { display: block; }
 </style>
 </head>
 <body>
@@ -220,6 +230,8 @@
 
 <!-- 配额条 -->
 <div id="quota-bar"></div>
+<!-- 套餐到期提示 -->
+<div id="expiry-bar"></div>
 
 <!-- 鉴权覆盖层 -->
 <div id="auth-overlay" class="show">
@@ -231,7 +243,7 @@
   <!-- paywall：试用结束 -->
   <div id="state-paywall" class="auth-card" style="display:none">
     <h2>⏱️ 免费试用已结束</h2>
-    <p>加微信，转账后发给你访问链接：</p>
+    <p>加小助理微信，转账后发给你访问链接：</p>
     <p class="wechat-id" id="paywall-wechat"></p>
     <p style="font-size:.75rem;color:#475569">
       购买后你会收到一条专属链接，打开即可继续使用
@@ -346,6 +358,7 @@ const stateChecking = document.getElementById('state-checking')
 const statePaywall  = document.getElementById('state-paywall')
 const stateInvalid  = document.getElementById('state-invalid')
 const quotaBar      = document.getElementById('quota-bar')
+const expiryBar     = document.getElementById('expiry-bar')
 
 // ──────────────────────────────────────────────────────────────
 // 3. 状态
@@ -357,11 +370,12 @@ let running       = false
 let lastIsHunch   = false        // 上一帧推理结果（供 tick 读取）
 
 // 鉴权状态
-let accessMode     = null   // 'trial' | 'token'
-let quotaSecs      = 0      // 当前剩余秒数
-let activeToken    = null   // URL token（token 模式时有值）
-let reportTimer    = null   // 每 30s 上报用量的定时器句柄
-let unreportedSecs = 0      // 距上次上报后尚未同步到服务端的秒数
+let accessMode      = null   // 'trial' | 'token'
+let quotaSecs       = 0      // 当前剩余秒数
+let activeToken     = null   // URL token（token 模式时有值）
+let tokenExpiresAt  = null   // token 的日历到期时间（ISO 字符串，token 模式）
+let reportTimer     = null   // 每 30s 上报用量的定时器句柄
+let unreportedSecs  = 0      // 距上次上报后尚未同步到服务端的秒数
 
 // 统计（每秒更新）
 let goodSecs      = 0
@@ -416,13 +430,23 @@ function showPaywall() {
   showOverlay('paywall')
 }
 
-// 更新配额条文字和样式
+// 更新配额条和到期提示
 function updateQuotaBar() {
   const label = accessMode === 'trial' ? '⏱ 试用剩余' : '⏳ 配额剩余'
   quotaBar.textContent = `${label}：${fmtTime(quotaSecs)}`
   quotaBar.classList.add('show')
   quotaBar.classList.toggle('trial-mode', accessMode === 'trial')
   quotaBar.classList.toggle('low', quotaSecs <= 30)
+
+  // 套餐到期提示（仅 token 模式）
+  if (accessMode === 'token' && tokenExpiresAt) {
+    const d = new Date(tokenExpiresAt)
+    const dateStr = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`
+    expiryBar.textContent = `本套餐 ${dateStr} 到期`
+    expiryBar.classList.add('show')
+  } else {
+    expiryBar.classList.remove('show')
+  }
 }
 
 // 鉴权主流程：检查 URL token 或试用状态
@@ -443,9 +467,10 @@ async function checkAccess() {
       const res = await r.json()
 
       if (res.status === 'valid') {
-        accessMode  = 'token'
-        activeToken = urlToken
-        quotaSecs   = res.remainingSecs ?? 0
+        accessMode     = 'token'
+        activeToken    = urlToken
+        quotaSecs      = res.remainingSecs ?? 0
+        tokenExpiresAt = res.expiresAt ?? null
         hideOverlay()
         updateQuotaBar()
       } else {
