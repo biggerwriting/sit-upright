@@ -414,6 +414,12 @@ function hideOverlay() {
   authOverlay.classList.remove('show')
 }
 
+// 显示付费引导弹窗
+function showPaywall() {
+  document.getElementById('paywall-wechat').textContent = WECHAT_ID
+  showOverlay('paywall')
+}
+
 // 更新配额条文字和样式
 function updateQuotaBar() {
   const m   = Math.floor(quotaSecs / 60)
@@ -474,8 +480,7 @@ async function checkAccess() {
         hideOverlay()
         updateQuotaBar()
       } else {
-        document.getElementById('paywall-wechat').textContent = WECHAT_ID
-        showOverlay('paywall')
+        showPaywall()
       }
     }
   } catch (e) {
@@ -566,9 +571,8 @@ function tick() {
     quotaSecs--
     updateQuotaBar()
     if (quotaSecs === 0) {
-      stopDetection()
-      document.getElementById('paywall-wechat').textContent = WECHAT_ID
-      showOverlay('paywall')
+      stopDetection(true)
+      showPaywall()
     }
   }
 }
@@ -646,16 +650,23 @@ async function startDetection() {
 
   // 仅 token 模式每 30s 上报用量到后端
   if (accessMode === 'token' && activeToken) {
+    let _reporting = false
     reportTimer = setInterval(async () => {
-      const res = await fetch(`${SUPABASE_FUNC_URL}/update-usage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: activeToken, seconds: 30 }),
-      }).then(r => r.json()).catch(() => null)
-      if (res?.status === 'exhausted') {
-        stopDetection()
-        document.getElementById('paywall-wechat').textContent = WECHAT_ID
-        showOverlay('paywall')
+      if (_reporting) return
+      _reporting = true
+      try {
+        const res = await fetch(`${SUPABASE_FUNC_URL}/update-usage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: activeToken, seconds: 30 }),
+        }).then(r => r.json()).catch(() => null)
+        if (!running) return  // 用户已手动停止，丢弃 stale 回调
+        if (res?.status === 'exhausted') {
+          stopDetection(true)
+          showPaywall()
+        }
+      } finally {
+        _reporting = false
       }
     }, 30_000)
   }
@@ -665,7 +676,7 @@ async function startDetection() {
   btn.disabled = false
 }
 
-function stopDetection() {
+function stopDetection(skipReport = false) {
   running = false
   if (detectTimer) { clearInterval(detectTimer); detectTimer = null }
   if (tickTimer)   { clearInterval(tickTimer);   tickTimer   = null }
@@ -679,8 +690,8 @@ function stopDetection() {
   badge.className = ''
   badge.textContent = '检测已停止'
 
-  // 展示报告
-  showReport()
+  // 展示报告（配额归零时不展示，转为显示 paywall）
+  if (!skipReport) showReport()
 
   btn.textContent = '开始检测'
   btn.className = 'start'
