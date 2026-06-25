@@ -434,16 +434,18 @@ async function checkAccess() {
   try {
     if (urlToken) {
       // ── Token 模式 ──
-      const res = await fetch(`${SUPABASE_FUNC_URL}/check-token`, {
+      const r = await fetch(`${SUPABASE_FUNC_URL}/check-token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: urlToken }),
-      }).then(r => r.json())
+      })
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      const res = await r.json()
 
       if (res.status === 'valid') {
         accessMode  = 'token'
         activeToken = urlToken
-        quotaSecs   = res.remainingSecs
+        quotaSecs   = res.remainingSecs ?? 0
         hideOverlay()
         updateQuotaBar()
       } else {
@@ -458,15 +460,17 @@ async function checkAccess() {
     } else {
       // ── 试用模式 ──
       const deviceId = getDeviceId()
-      const res = await fetch(`${SUPABASE_FUNC_URL}/check-trial`, {
+      const r = await fetch(`${SUPABASE_FUNC_URL}/check-trial`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deviceId }),
-      }).then(r => r.json())
+      })
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      const res = await r.json()
 
       if (res.status === 'trial') {
         accessMode = 'trial'
-        quotaSecs  = res.remainingSecs
+        quotaSecs  = res.remainingSecs ?? 0
         hideOverlay()
         updateQuotaBar()
       } else {
@@ -474,7 +478,8 @@ async function checkAccess() {
         showOverlay('paywall')
       }
     }
-  } catch {
+  } catch (e) {
+    console.error('[checkAccess] 鉴权失败，降级为试用模式:', e)
     // 网络错误时降级：允许访问但不计配额
     accessMode = 'trial'
     quotaSecs  = 300
