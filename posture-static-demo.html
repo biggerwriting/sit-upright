@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>坐姿检测 · 静态演示</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+    gap: 20px;
+  }
+  h1 { font-size: 1.4rem; color: #94a3b8; letter-spacing: .05em; }
+
+  /* ── 摄像头区 ── */
+  #cam-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    aspect-ratio: 4/3;
+    background: #1e293b;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  #cam-wrap video, #cam-wrap canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1); /* 镜像 */
+  }
+  #cam-wrap canvas { background: transparent; }
+  #status-badge {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 14px;
+    border-radius: 999px;
+    font-size: .8rem;
+    font-weight: 600;
+    background: #475569;
+    color: #fff;
+    transition: background .3s;
+    z-index: 10;
+  }
+  #status-badge.good  { background: #16a34a; }
+  #status-badge.bad   { background: #ea580c; }
+  #status-badge.warn  { background: #dc2626; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+  /* ── 统计卡片 ── */
+  #stats-row {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    max-width: 480px;
+  }
+  .stat-card {
+    flex: 1;
+    background: #1e293b;
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+  }
+  .stat-card .label { font-size: .75rem; color: #64748b; margin-bottom: 4px; }
+  .stat-card .value { font-size: 1.5rem; font-weight: 700; }
+  .stat-card.good .value { color: #4ade80; }
+  .stat-card.bad  .value { color: #fb923c; }
+  .stat-card.total .value { color: #94a3b8; }
+
+  /* ── 进度条时间轴 ── */
+  #timeline-wrap {
+    width: 100%;
+    max-width: 480px;
+    background: #1e293b;
+    border-radius: 10px;
+    padding: 14px;
+  }
+  #timeline-wrap h3 { font-size: .85rem; color: #64748b; margin-bottom: 8px; }
+  #timeline {
+    display: flex;
+    height: 20px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #334155;
+    gap: 1px;
+  }
+  .seg-good { background: #16a34a; }
+  .seg-bad  { background: #ea580c; }
+
+  /* ── 按钮 ── */
+  #btn {
+    padding: 12px 36px;
+    border: none;
+    border-radius: 999px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .2s, transform .1s;
+  }
+  #btn:active { transform: scale(.97); }
+  #btn:disabled { opacity: .4; cursor: not-allowed; }
+  #btn.start { background: #22c55e; color: #fff; }
+  #btn.stop  { background: #ef4444; color: #fff; }
+
+  /* ── 弹出报告 ── */
+  #overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  #overlay.show { display: flex; }
+  #report {
+    background: #1e293b;
+    border-radius: 16px;
+    padding: 28px;
+    width: min(420px, 90vw);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  #report h2 { font-size: 1.2rem; }
+  .report-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: .9rem;
+  }
+  .report-row .key  { color: #94a3b8; }
+  .report-row .val  { font-weight: 600; }
+  .report-row .val.good  { color: #4ade80; }
+  .report-row .val.bad   { color: #fb923c; }
+  #report-timeline {
+    display: flex;
+    height: 18px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #334155;
+    gap: 1px;
+  }
+  #report-close {
+    align-self: flex-end;
+    padding: 8px 22px;
+    background: #334155;
+    border: none;
+    border-radius: 8px;
+    color: #e2e8f0;
+    cursor: pointer;
+    font-size: .9rem;
+  }
+  #report-close:hover { background: #475569; }
+</style>
+</head>
+<body>
+
+<h1>🪑 坐姿检测</h1>
+
+<div id="cam-wrap">
+  <video id="video" playsinline muted></video>
+  <canvas id="canvas"></canvas>
+  <div id="status-badge">加载模型中…</div>
+</div>
+
+<div id="stats-row">
+  <div class="stat-card good">
+    <div class="label">优秀坐姿</div>
+    <div class="value" id="good-secs">0<small style="font-size:.7em">s</small></div>
+  </div>
+  <div class="stat-card total">
+    <div class="label">总时长</div>
+    <div class="value" id="total-secs">0<small style="font-size:.7em">s</small></div>
+  </div>
+  <div class="stat-card bad">
+    <div class="label">不良坐姿</div>
+    <div class="value" id="bad-secs">0<small style="font-size:.7em">s</small></div>
+  </div>
+</div>
+
+<div id="timeline-wrap">
+  <h3>坐姿时间轴</h3>
+  <div id="timeline"></div>
+</div>
+
+<button id="btn" class="start" disabled>正在加载模型…</button>
+
+<!-- 结束报告弹窗 -->
+<div id="overlay">
+  <div id="report">
+    <h2>📊 本次检测报告</h2>
+    <div class="report-row">
+      <span class="key">检测时长</span>
+      <span class="val" id="r-total">-</span>
+    </div>
+    <div class="report-row">
+      <span class="key">优秀坐姿</span>
+      <span class="val good" id="r-good">-</span>
+    </div>
+    <div class="report-row">
+      <span class="key">不良坐姿</span>
+      <span class="val bad" id="r-bad">-</span>
+    </div>
+    <div class="report-row">
+      <span class="key">优秀率</span>
+      <span class="val good" id="r-pct">-</span>
+    </div>
+    <div id="report-timeline"></div>
+    <button id="report-close">关闭</button>
+  </div>
+</div>
+
+<script type="module">
+// ──────────────────────────────────────────────────────────────
+// 1. 配置
+// ──────────────────────────────────────────────────────────────
+// 模型路径：优先本地（与 HTML 同目录），也可换成公网 URL
+const MODEL_PATH = './pose_landmarker_lite.task'
+const HUNCH_THRESHOLD = 0.18        // 头肩距阈值（与主项目一致）
+const ALERT_BAD_SECONDS = 5         // 连续弓腰超过此秒数高亮警告
+
+// MediaPipe 骨架连接
+const CONNECTIONS = [
+  [0,11],[0,12],[11,12],
+  [11,23],[12,24],[23,24],
+  [23,25],[24,26],[25,27],[26,28],
+]
+const KEY_IDXS = [0,11,12,23,24,25,26,27,28]
+
+// ──────────────────────────────────────────────────────────────
+// 2. DOM 引用
+// ──────────────────────────────────────────────────────────────
+const video      = document.getElementById('video')
+const canvas     = document.getElementById('canvas')
+const ctx        = canvas.getContext('2d')
+const badge      = document.getElementById('status-badge')
+const btn        = document.getElementById('btn')
+const goodEl     = document.getElementById('good-secs')
+const badEl      = document.getElementById('bad-secs')
+const totalEl    = document.getElementById('total-secs')
+const timelineEl = document.getElementById('timeline')
+const overlay    = document.getElementById('overlay')
+
+// ──────────────────────────────────────────────────────────────
+// 3. 状态
+// ──────────────────────────────────────────────────────────────
+let landmarker   = null
+let rafId        = null
+let tickTimer    = null
+let running      = false
+let lastIsHunch  = false         // 上一帧推理结果（供 tick 读取）
+
+// 统计（每秒更新）
+let goodSecs     = 0
+let badSecs      = 0
+let continuousBad = 0            // 连续弓腰秒数
+
+// 时间轴段（{type:'good'|'bad', dur:number}[]）
+let segments     = []
+let curSegType   = null
+let curSegDur    = 0
+
+// ──────────────────────────────────────────────────────────────
+// 4. 坐姿分析（复现 usePostureAnalyzer 逻辑）
+// ──────────────────────────────────────────────────────────────
+function analyzePosture(lms) {
+  const nose   = lms[0]
+  const lSh    = lms[11]
+  const rSh    = lms[12]
+  const shMidY = (lSh.y + rSh.y) / 2
+  const headShoulderDist = shMidY - nose.y
+  const noseBelowShoulder = nose.y > shMidY
+  return headShoulderDist < HUNCH_THRESHOLD || noseBelowShoulder
+}
+
+// ──────────────────────────────────────────────────────────────
+// 5. 时间轴渲染
+// ──────────────────────────────────────────────────────────────
+function renderTimeline(container, segs) {
+  const total = segs.reduce((s, g) => s + g.dur, 0)
+  if (total === 0) { container.innerHTML = ''; return }
+  container.innerHTML = segs.map(seg => {
+    const pct = (seg.dur / total * 100).toFixed(2)
+    return `<div class="seg-${seg.type}" style="flex:${pct} 0 0;min-width:2px" title="${seg.type}:${seg.dur}s"></div>`
+  }).join('')
+}
+
+// ──────────────────────────────────────────────────────────────
+// 6. 每秒统计 tick
+// ──────────────────────────────────────────────────────────────
+function tick() {
+  const isHunch = lastIsHunch
+
+  if (isHunch) { badSecs++;  continuousBad++ }
+  else          { goodSecs++; continuousBad = 0 }
+
+  // 更新 badge
+  if (!isHunch) {
+    badge.className = 'good'
+    badge.textContent = '坐姿良好 ✓'
+  } else if (continuousBad >= ALERT_BAD_SECONDS) {
+    badge.className = 'warn'
+    badge.textContent = `请坐直！已弓腰 ${continuousBad}s`
+  } else {
+    badge.className = 'bad'
+    badge.textContent = '检测到弓腰'
+  }
+
+  // 更新数字
+  const type = isHunch ? 'bad' : 'good'
+  const total = goodSecs + badSecs
+  goodEl.innerHTML  = `${goodSecs}<small style="font-size:.7em">s</small>`
+  badEl.innerHTML   = `${badSecs}<small style="font-size:.7em">s</small>`
+  totalEl.innerHTML = `${total}<small style="font-size:.7em">s</small>`
+
+  // 更新段
+  if (type === curSegType) {
+    curSegDur++
+    segments[segments.length - 1].dur = curSegDur
+  } else {
+    curSegType = type
+    curSegDur  = 1
+    segments.push({ type, dur: 1 })
+  }
+  renderTimeline(timelineEl, segments)
+}
+
+// ──────────────────────────────────────────────────────────────
+// 7. 推理循环（rAF）
+// ──────────────────────────────────────────────────────────────
+function loop() {
+  if (!landmarker || !running) return
+  if (video.readyState < 2 || video.videoWidth === 0) {
+    rafId = requestAnimationFrame(loop); return
+  }
+
+  canvas.width  = video.videoWidth
+  canvas.height = video.videoHeight
+  const tsMs = performance.now()
+
+  let result
+  try { result = landmarker.detectForVideo(video, tsMs) }
+  catch { rafId = requestAnimationFrame(loop); return }
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+  if (result.landmarks.length > 0) {
+    const lms = result.landmarks[0]
+    const w = canvas.width, h = canvas.height
+
+    // 骨架
+    ctx.strokeStyle = 'rgba(100,220,100,.9)'
+    ctx.lineWidth = 2
+    for (const [i,j] of CONNECTIONS) {
+      ctx.beginPath()
+      ctx.moveTo(lms[i].x*w, lms[i].y*h)
+      ctx.lineTo(lms[j].x*w, lms[j].y*h)
+      ctx.stroke()
+    }
+    ctx.fillStyle = 'rgb(60,160,255)'
+    for (const idx of KEY_IDXS) {
+      ctx.beginPath()
+      ctx.arc(lms[idx].x*w, lms[idx].y*h, 5, 0, Math.PI*2)
+      ctx.fill()
+    }
+
+    lastIsHunch = analyzePosture(lms)
+  }
+
+  rafId = requestAnimationFrame(loop)
+}
+
+// ──────────────────────────────────────────────────────────────
+// 8. 开始 / 停止
+// ──────────────────────────────────────────────────────────────
+async function startDetection() {
+  btn.disabled = true
+  btn.textContent = '正在开启摄像头…'
+
+  let stream
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+  } catch {
+    badge.textContent = '❌ 摄像头权限被拒'
+    btn.disabled = false
+    return
+  }
+
+  video.srcObject = stream
+  await video.play()
+
+  // 重置统计
+  goodSecs = badSecs = continuousBad = 0
+  segments = []; curSegType = null; curSegDur = 0
+  goodEl.textContent = badEl.textContent = totalEl.textContent = '0'
+  timelineEl.innerHTML = ''
+
+  running = true
+  rafId = requestAnimationFrame(loop)
+
+  tickTimer = setInterval(tick, 1000)
+
+  btn.textContent = '停止检测'
+  btn.className = 'stop'
+  btn.disabled = false
+}
+
+function stopDetection() {
+  running = false
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null }
+  if (tickTimer) { clearInterval(tickTimer); tickTimer = null }
+
+  // 关闭摄像头
+  const stream = video.srcObject
+  if (stream) stream.getTracks().forEach(t => t.stop())
+  video.srcObject = null
+
+  badge.className = ''
+  badge.textContent = '检测已停止'
+
+  // 展示报告
+  showReport()
+
+  btn.textContent = '开始检测'
+  btn.className = 'start'
+}
+
+btn.addEventListener('click', () => {
+  if (running) stopDetection()
+  else         startDetection()
+})
+
+// ──────────────────────────────────────────────────────────────
+// 9. 报告弹窗
+// ──────────────────────────────────────────────────────────────
+function fmtTime(s) {
+  const m = Math.floor(s / 60)
+  const r = s % 60
+  return m > 0 ? `${m} 分 ${r} 秒` : `${r} 秒`
+}
+
+function showReport() {
+  const total = goodSecs + badSecs
+  const pct   = total === 0 ? 0 : Math.round(goodSecs / total * 100)
+
+  document.getElementById('r-total').textContent = fmtTime(total)
+  document.getElementById('r-good').textContent  = `${goodSecs}s (${pct}%)`
+  document.getElementById('r-bad').textContent   = `${badSecs}s (${100-pct}%)`
+  document.getElementById('r-pct').textContent   = `${pct}%`
+  renderTimeline(document.getElementById('report-timeline'), segments)
+
+  overlay.classList.add('show')
+}
+
+document.getElementById('report-close').addEventListener('click', () => {
+  overlay.classList.remove('show')
+})
+
+// ──────────────────────────────────────────────────────────────
+// 10. 初始化 MediaPipe（全部本地文件，无需联网）
+// ──────────────────────────────────────────────────────────────
+async function init() {
+  try {
+    // 从本地 vendor 目录加载，不依赖 CDN
+    const { PoseLandmarker, FilesetResolver } = await import(
+      './vendor/mediapipe/vision_bundle.mjs'
+    )
+
+    const vision = await FilesetResolver.forVisionTasks(
+      './vendor/mediapipe/wasm'
+    )
+
+    landmarker = await PoseLandmarker.createFromOptions(vision, {
+      baseOptions: { modelAssetPath: MODEL_PATH },
+      runningMode: 'VIDEO',
+      numPoses: 1,
+      minPoseDetectionConfidence: 0.6,
+      minPosePresenceConfidence: 0.6,
+      minTrackingConfidence: 0.6,
+    })
+
+    badge.textContent = '就绪，点击开始'
+    btn.textContent   = '开始检测'
+    btn.disabled      = false
+  } catch (e) {
+    console.error(e)
+    badge.textContent = '❌ 模型加载失败'
+    btn.textContent   = '加载失败（刷新重试）'
+  }
+}
+
+init()
+</script>
+</body>
+</html>

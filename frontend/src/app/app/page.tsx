@@ -96,9 +96,26 @@ export default function AppPage() {
     mediaPipe.stopDetection()
     alerts.reset()
 
-    const stats = await api.endSession(sessionIdRef.current!)
+    // 先快照本地数据（含完整 segments 时间轴），再 reset
+    const localStats: SessionStats = {
+      totalSeconds: tracker.stats.totalSeconds,
+      goodSeconds:  tracker.stats.goodSeconds,
+      badSeconds:   tracker.stats.badSeconds,
+      segments:     [...tracker.stats.segments],
+    }
+
+    // 最后一次把最新数据同步给后端，再关闭 session
+    const sid = sessionIdRef.current!
+    try {
+      await api.updateSession(sid, {
+        goodSeconds: localStats.goodSeconds,
+        badSeconds:  localStats.badSeconds,
+      })
+    } catch { /* 忽略最后一次上报失败 */ }
+    await api.endSession(sid)
+
     sessionIdRef.current = null
-    setFinalStats(stats)
+    setFinalStats(localStats)   // 使用本地数据展示完整时间轴
     setPageStatus('idle')
     tracker.reset()
   }, [mediaPipe, alerts, tracker])

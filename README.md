@@ -93,6 +93,59 @@ cp /原目录/pose_landmarker_lite.task /新目录/
 
 如需打包成独立 `.app`，参见 [INSTALL.md](INSTALL.md)。
 
+---
+
+## 静态演示页（无需后端）
+
+`posture-static-demo.html` 是一个**零依赖、纯前端**的坐姿检测页面，不需要启动任何后端或 Node 服务，适合快速体验或离线演示。
+
+### 功能
+
+- 实时摄像头坐姿推理（MediaPipe Pose Landmarker，WASM 在浏览器内运行）
+- 骨架关键点可视化叠加
+- 每秒统计好/坏坐姿秒数 + 连续弓腰警告
+- 坐姿时间轴（色块显示好/坏切换）
+- 停止后弹出本次检测报告（时长、优秀率）
+
+### 文件结构
+
+```
+good-sit/
+├── posture-static-demo.html     ← 演示页（入口）
+├── pose_landmarker_lite.task    ← 姿态模型（5.5 MB）
+└── vendor/
+    └── mediapipe/
+        ├── vision_bundle.mjs    ← 推理库（从 node_modules 复制）
+        └── wasm/                ← WASM 运行时（6 个文件，约 33 MB）
+```
+
+> `vendor/` 目录需手动生成（见下方初始化步骤），已加入 `.gitignore` 不提交。
+
+### 初始化 vendor 目录
+
+首次使用前，在项目根目录执行一次（需已安装前端依赖 `npm install`）：
+
+```bash
+mkdir -p vendor/mediapipe/wasm
+
+# 复制推理库
+cp frontend/node_modules/@mediapipe/tasks-vision/vision_bundle.mjs vendor/mediapipe/
+
+# 复制 WASM 运行时
+cp frontend/node_modules/@mediapipe/tasks-vision/wasm/* vendor/mediapipe/wasm/
+```
+
+### 启动
+
+```bash
+# 在项目根目录起一个本地 HTTP 服务器（Python 自带）
+python3 -m http.server 8080
+```
+
+然后在浏览器打开：**`http://localhost:8080/posture-static-demo.html`**
+
+> ⚠️ 必须通过 `http://localhost` 访问，不能直接双击文件（`file://` 协议无法申请摄像头权限）。
+
 # 提高依赖库下载速度
 换清华镜像源
 

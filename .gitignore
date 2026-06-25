@@ -4,6 +4,9 @@
 # 模型文件（大体积二进制，运行时自动下载）
 pose_landmarker_lite.task
 
+# 静态页本地依赖（从 node_modules 复制，不提交大体积 wasm）
+vendor/
+
 # 打包产物
 build/
 dist/
