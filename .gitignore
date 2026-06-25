@@ -24,3 +24,7 @@ backend/.venv/
 backend/.env
 backend/posture.db
 scripts/.env
+
+# Supabase CLI 临时文件
+supabase/.temp/
+scripts/supabase/

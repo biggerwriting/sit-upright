@@ -504,3 +504,11 @@ http://localhost:8080/posture-static-demo.html?token=xxxxxxxx-xxxx-xxxx-xxxx-xxx
 
 浏览器 DevTools → Application → Local Storage → 删除 posture_device_id 键 → 刷新
 可重置试用计时器（模拟新设备）。
+
+用 Supabase SQL Editor 确认两张表的 RLS 都关掉了：
+```sql
+-- 确认关闭（幂等，重复执行无副作用）
+ALTER TABLE tokens DISABLE ROW LEVEL SECURITY;
+ALTER TABLE trials DISABLE ROW LEVEL SECURITY;
+```
+
