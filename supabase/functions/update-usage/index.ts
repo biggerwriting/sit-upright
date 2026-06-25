@@ -1,16 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'content-type',
-}
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...CORS, 'Content-Type': 'application/json' },
-  })
-}
+import { CORS, json } from '../_shared/http.ts'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
@@ -21,22 +10,21 @@ Deno.serve(async (req) => {
   )
 
   const { token, seconds } = await req.json()
-  if (!token || typeof seconds !== 'number' || seconds < 0) {
+  // FIX 6: reject seconds <= 0 (was < 0) to block free validity-oracle calls with seconds=0
+  if (!token || typeof seconds !== 'number' || seconds <= 0) {
     return json({ status: 'error', message: 'invalid params' }, 400)
   }
 
-  const { data: record } = await supabase
-    .from('tokens')
-    .select('quota_secs, used_secs')
-    .eq('token', token)
-    .maybeSingle()
+  // FIX 2 & 4: atomic read-modify-write via DB function;
+  // WHERE clause filters expired tokens (expires_at > now()), so 0 rows = invalid or expired
+  const { data: rows } = await supabase.rpc('increment_token_usage', {
+    p_token: token,
+    p_seconds: seconds,
+  })
 
+  const record = (rows as { quota_secs: number; used_secs: number }[] | null)?.[0]
   if (!record) return json({ status: 'invalid', remainingSecs: 0 })
 
-  // 上限保护：used_secs 不超过 quota_secs
-  const newUsedSecs = Math.min(record.used_secs + seconds, record.quota_secs)
-  await supabase.from('tokens').update({ used_secs: newUsedSecs }).eq('token', token)
-
-  const remainingSecs = record.quota_secs - newUsedSecs
+  const remainingSecs = record.quota_secs - record.used_secs
   return json({ status: remainingSecs > 0 ? 'valid' : 'exhausted', remainingSecs })
 })

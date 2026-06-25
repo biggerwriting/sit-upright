@@ -397,17 +397,12 @@ function getDeviceId() {
   return id
 }
 
-// 切换覆盖层显示的子状态
-function showAuthState(state) {
+// 显示/隐藏整个覆盖层
+function showOverlay(state) {
   ;[stateChecking, statePaywall, stateInvalid].forEach(el => el.style.display = 'none')
   if (state === 'checking') stateChecking.style.display = ''
   if (state === 'paywall')  statePaywall.style.display  = ''
   if (state === 'invalid')  stateInvalid.style.display  = ''
-}
-
-// 显示/隐藏整个覆盖层
-function showOverlay(state) {
-  showAuthState(state)
   authOverlay.classList.add('show')
 }
 function hideOverlay() {
@@ -422,13 +417,11 @@ function showPaywall() {
 
 // 更新配额条文字和样式
 function updateQuotaBar() {
-  const m   = Math.floor(quotaSecs / 60)
-  const s   = quotaSecs % 60
-  const txt = m > 0 ? `${m} 分 ${s} 秒` : `${s} 秒`
   const label = accessMode === 'trial' ? '⏱ 试用剩余' : '⏳ 配额剩余'
-  quotaBar.textContent = `${label}：${txt}`
-  quotaBar.className   = 'show' + (accessMode === 'trial' ? ' trial-mode' : '') +
-                         (quotaSecs <= 30 ? ' low' : '')
+  quotaBar.textContent = `${label}：${fmtTime(quotaSecs)}`
+  quotaBar.classList.add('show')
+  quotaBar.classList.toggle('trial-mode', accessMode === 'trial')
+  quotaBar.classList.toggle('low', quotaSecs <= 30)
 }
 
 // 鉴权主流程：检查 URL token 或试用状态
@@ -484,12 +477,19 @@ async function checkAccess() {
       }
     }
   } catch (e) {
-    console.error('[checkAccess] 鉴权失败，降级为试用模式:', e)
-    // 网络错误时降级：允许访问但不计配额
-    accessMode = 'trial'
-    quotaSecs  = 300
-    hideOverlay()
-    updateQuotaBar()
+    console.error('[checkAccess] 鉴权失败:', e)
+    if (urlToken) {
+      // token 模式网络失败：不降级，显示错误提示，要求用户检查网络
+      document.getElementById('invalid-msg').textContent = '网络错误，请检查网络连接后刷新重试。'
+      document.getElementById('invalid-wechat').textContent = WECHAT_ID
+      showOverlay('invalid')
+    } else {
+      // 无 token 的纯试用模式网络失败：降级，允许本地访问
+      accessMode = 'trial'
+      quotaSecs  = 300
+      hideOverlay()
+      updateQuotaBar()
+    }
   }
 }
 
@@ -693,8 +693,14 @@ function stopDetection(skipReport = false) {
   // 展示报告（配额归零时不展示，转为显示 paywall）
   if (!skipReport) showReport()
 
-  btn.textContent = '开始检测'
-  btn.className = 'start'
+  if (!skipReport) {
+    // 手动停止：重置按钮允许重新开始
+    btn.textContent = '开始检测'
+    btn.className = 'start'
+  } else {
+    // 配额/token 归零停止：保持禁用，paywall 会覆盖页面
+    btn.disabled = true
+  }
 }
 
 btn.addEventListener('click', () => {
@@ -761,7 +767,7 @@ async function init() {
   }
 }
 
-checkAccess().then(() => init())
+checkAccess().then(() => init()).catch(e => console.error('[init]', e))
 </script>
 </body>
 </html>
