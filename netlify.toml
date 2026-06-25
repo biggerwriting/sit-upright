@@ -1,12 +1,17 @@
 [build]
-  # 安装前端依赖并生成 vendor/（mediapipe wasm，gitignore 不提交故在此生成）
+  # 1. 安装前端依赖并生成 vendor/（mediapipe wasm，gitignore 不提交）
+  # 2. 用 Netlify 自动提供的 $URL 变量替换 index.html 里的域名占位符
   command = """
     cd frontend && npm install && cd .. && \
     mkdir -p vendor/mediapipe/wasm && \
     cp frontend/node_modules/@mediapipe/tasks-vision/vision_bundle.mjs vendor/mediapipe/ && \
-    cp frontend/node_modules/@mediapipe/tasks-vision/wasm/* vendor/mediapipe/wasm/
+    cp frontend/node_modules/@mediapipe/tasks-vision/wasm/* vendor/mediapipe/wasm/ && \
+    sed -i "s|https://your-site.netlify.app|${URL}|g" index.html
   """
   publish = "."     # 项目根目录作为静态资源目录
+
+[build.environment]
+  NODE_VERSION = "20"
 
 # 安全响应头
 [[headers]]
