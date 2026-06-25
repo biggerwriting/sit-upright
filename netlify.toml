@@ -1,0 +1,16 @@
+[build]
+  publish = "."     # 项目根目录作为静态资源目录
+
+# 安全响应头
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# WASM 文件必须带正确 MIME 类型，否则浏览器拒绝执行
+[[headers]]
+  for = "/*.wasm"
+  [headers.values]
+    Content-Type = "application/wasm"
