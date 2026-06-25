@@ -243,10 +243,36 @@
 
 <!-- 鉴权覆盖层 -->
 <div id="auth-overlay" class="show">
-  <!-- checking：加载中 -->
+  <!-- checking：鉴权中 -->
   <div id="state-checking" class="auth-card">
     <div class="spinner"></div>
     <p>正在验证访问权限…</p>
+  </div>
+  <!-- model-loading：AI 模型加载中 -->
+  <div id="state-model-loading" class="auth-card" style="display:none">
+    <div class="spinner"></div>
+    <p id="model-loading-stage">正在加载推理引擎…</p>
+    <p style="font-size:.78rem;color:#475569;line-height:1.6">
+      首次访问需下载约 33 MB 的 AI 引擎<br>
+      视网速需要 <strong style="color:#94a3b8">20 – 60 秒</strong>，下载后自动缓存
+    </p>
+    <div id="model-loading-bar-wrap" style="width:100%;background:#1e293b;border-radius:4px;height:4px;overflow:hidden">
+      <div id="model-loading-bar" style="height:100%;background:linear-gradient(90deg,#22d3ee,#4ade80);width:0%;transition:width .5s ease"></div>
+    </div>
+  </div>
+  <!-- model-error：模型加载失败 -->
+  <div id="state-model-error" class="auth-card" style="display:none">
+    <h2>⚠️ 模型加载失败</h2>
+    <p id="model-error-msg" style="color:#f87171"></p>
+    <p style="font-size:.8rem;color:#475569">
+      可以刷新页面重试，若多次失败请联系：<br>
+      <span style="color:#4ade80;font-weight:700" id="model-error-wechat"></span>
+    </p>
+    <button id="model-retry-btn"
+      style="padding:10px 28px;background:#22c55e;border:none;border-radius:8px;
+             color:#fff;font-weight:600;cursor:pointer;font-size:.95rem">
+      🔄 重新加载
+    </button>
   </div>
   <!-- paywall：试用结束 -->
   <div id="state-paywall" class="auth-card" style="display:none">
@@ -363,12 +389,16 @@ const badEl          = document.getElementById('bad-secs')
 const totalEl        = document.getElementById('total-secs')
 const timelineEl     = document.getElementById('timeline')
 const overlay        = document.getElementById('overlay')
-const authOverlay   = document.getElementById('auth-overlay')
-const stateChecking = document.getElementById('state-checking')
-const statePaywall  = document.getElementById('state-paywall')
-const stateInvalid  = document.getElementById('state-invalid')
-const quotaBar      = document.getElementById('quota-bar')
-const expiryBar     = document.getElementById('expiry-bar')
+const authOverlay        = document.getElementById('auth-overlay')
+const stateChecking      = document.getElementById('state-checking')
+const statePaywall       = document.getElementById('state-paywall')
+const stateInvalid       = document.getElementById('state-invalid')
+const stateModelLoading  = document.getElementById('state-model-loading')
+const stateModelError    = document.getElementById('state-model-error')
+const modelLoadingStage  = document.getElementById('model-loading-stage')
+const modelLoadingBar    = document.getElementById('model-loading-bar')
+const quotaBar           = document.getElementById('quota-bar')
+const expiryBar          = document.getElementById('expiry-bar')
 
 // ──────────────────────────────────────────────────────────────
 // 3. 状态
@@ -424,14 +454,23 @@ function getDeviceId() {
 
 // 显示/隐藏整个覆盖层
 function showOverlay(state) {
-  ;[stateChecking, statePaywall, stateInvalid].forEach(el => el.style.display = 'none')
-  if (state === 'checking') stateChecking.style.display = ''
-  if (state === 'paywall')  statePaywall.style.display  = ''
-  if (state === 'invalid')  stateInvalid.style.display  = ''
+  ;[stateChecking, statePaywall, stateInvalid, stateModelLoading, stateModelError]
+    .forEach(el => { if (el) el.style.display = 'none' })
+  if (state === 'checking')      stateChecking.style.display    = ''
+  if (state === 'paywall')       statePaywall.style.display      = ''
+  if (state === 'invalid')       stateInvalid.style.display      = ''
+  if (state === 'model-loading') stateModelLoading.style.display = ''
+  if (state === 'model-error')   stateModelError.style.display   = ''
   authOverlay.classList.add('show')
 }
 function hideOverlay() {
   authOverlay.classList.remove('show')
+}
+
+// 更新模型加载进度条和阶段文字
+function setModelStage(text, progressPct) {
+  if (modelLoadingStage) modelLoadingStage.textContent = text
+  if (modelLoadingBar)   modelLoadingBar.style.width   = progressPct + '%'
 }
 
 // 显示付费引导弹窗
@@ -481,8 +520,8 @@ async function checkAccess() {
         activeToken    = urlToken
         quotaSecs      = res.remainingSecs ?? 0
         tokenExpiresAt = res.expiresAt ?? null
-        hideOverlay()
         updateQuotaBar()
+        showOverlay('model-loading')  // 鉴权完成，继续等模型加载
       } else {
         document.getElementById('paywall-wechat').textContent  = WECHAT_ID
         document.getElementById('invalid-wechat').textContent  = WECHAT_ID
@@ -506,8 +545,8 @@ async function checkAccess() {
       if (res.status === 'trial') {
         accessMode = 'trial'
         quotaSecs  = res.remainingSecs ?? 0
-        hideOverlay()
         updateQuotaBar()
+        showOverlay('model-loading')  // 鉴权完成，继续等模型加载
       } else {
         showPaywall()
       }
@@ -523,8 +562,8 @@ async function checkAccess() {
       // 无 token 的纯试用模式网络失败：降级，允许本地访问
       accessMode = 'trial'
       quotaSecs  = 300
-      hideOverlay()
       updateQuotaBar()
+      showOverlay('model-loading')  // 降级访问，继续等模型加载
     }
   }
 }
@@ -789,15 +828,20 @@ document.getElementById('report-close').addEventListener('click', () => {
 // ──────────────────────────────────────────────────────────────
 async function init() {
   try {
-    // 从本地 vendor 目录加载，不依赖 CDN
+    // 阶段 1：加载 JS 推理库（~134 KB）
+    setModelStage('正在加载推理引擎…', 15)
     const { PoseLandmarker, FilesetResolver } = await import(
       './vendor/mediapipe/vision_bundle.mjs'
     )
 
+    // 阶段 2：初始化 WASM 运行时（~33 MB，最耗时）
+    setModelStage('正在初始化 WASM 运行时…', 45)
     const vision = await FilesetResolver.forVisionTasks(
       './vendor/mediapipe/wasm'
     )
 
+    // 阶段 3：加载姿态模型（~5.5 MB）
+    setModelStage('正在加载姿态模型…', 80)
     landmarker = await PoseLandmarker.createFromOptions(vision, {
       baseOptions: { modelAssetPath: MODEL_PATH },
       runningMode: 'VIDEO',
@@ -807,15 +851,44 @@ async function init() {
       minTrackingConfidence: 0.6,
     })
 
-    badge.textContent = '就绪，点击开始'
-    btn.textContent   = '开始检测'
-    btn.disabled      = false
+    // 全部完成：隐藏覆盖层
+    setModelStage('就绪', 100)
+    setTimeout(() => {
+      hideOverlay()
+      badge.textContent = '就绪，点击开始'
+      btn.textContent   = '开始检测'
+      btn.disabled      = false
+    }, 300)  // 短暂停留让进度条走满再消失
+
   } catch (e) {
-    console.error(e)
+    console.error('[init] 模型加载失败:', e)
+
+    // 根据错误类型给出不同提示
+    const msg = e?.message ?? ''
+    let hint
+    if (msg.includes('404') || msg.includes('Failed to fetch model')) {
+      hint = '模型文件丢失（404），请刷新或联系管理员。'
+    } else if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+      hint = '网络中断，请检查网络连接后重试。'
+    } else {
+      hint = '未知错误：' + msg.slice(0, 80)
+    }
+
+    document.getElementById('model-error-msg').textContent = hint
+    document.getElementById('model-error-wechat').textContent = WECHAT_ID
+    showOverlay('model-error')
+
     badge.textContent = '❌ 模型加载失败'
-    btn.textContent   = '加载失败（刷新重试）'
+    btn.textContent   = '加载失败'
   }
 }
+
+// 重试按钮
+document.getElementById('model-retry-btn')?.addEventListener('click', () => {
+  showOverlay('model-loading')
+  setModelStage('正在重新加载…', 5)
+  init()
+})
 
 checkAccess().then(() => init()).catch(e => console.error('[init]', e))
 </script>
