@@ -479,6 +479,14 @@ function showPaywall() {
   showOverlay('paywall')
 }
 
+// 模型就绪 + 鉴权通过 → 解锁检测按钮
+function readyToDetect() {
+  hideOverlay()
+  badge.textContent = '就绪，点击开始'
+  btn.textContent   = '开始检测'
+  btn.disabled      = false
+}
+
 // 更新配额条和到期提示
 function updateQuotaBar() {
   const label = accessMode === 'trial' ? '⏱ 试用剩余' : '⏳ 配额剩余'
@@ -521,7 +529,7 @@ async function checkAccess() {
         quotaSecs      = res.remainingSecs ?? 0
         tokenExpiresAt = res.expiresAt ?? null
         updateQuotaBar()
-        showOverlay('model-loading')  // 鉴权完成，继续等模型加载
+        readyToDetect() // 模型已就绪，鉴权通过，直接展示检测页
       } else {
         document.getElementById('paywall-wechat').textContent  = WECHAT_ID
         document.getElementById('invalid-wechat').textContent  = WECHAT_ID
@@ -546,7 +554,7 @@ async function checkAccess() {
         accessMode = 'trial'
         quotaSecs  = res.remainingSecs ?? 0
         updateQuotaBar()
-        showOverlay('model-loading')  // 鉴权完成，继续等模型加载
+        readyToDetect() // 模型已就绪，试用从此刻起算
       } else {
         showPaywall()
       }
@@ -563,7 +571,7 @@ async function checkAccess() {
       accessMode = 'trial'
       quotaSecs  = 300
       updateQuotaBar()
-      showOverlay('model-loading')  // 降级访问，继续等模型加载
+      readyToDetect() // 模型已就绪，降级放行
     }
   }
 }
@@ -827,6 +835,9 @@ document.getElementById('report-close').addEventListener('click', () => {
 // 10. 初始化 MediaPipe（全部本地文件，无需联网）
 // ──────────────────────────────────────────────────────────────
 async function init() {
+  // 立刻显示加载进度（在鉴权之前开始，试用计时不会浪费在这里）
+  showOverlay('model-loading')
+
   try {
     // 阶段 1：加载 JS 推理库（~134 KB）
     setModelStage('正在加载推理引擎…', 15)
@@ -851,14 +862,8 @@ async function init() {
       minTrackingConfidence: 0.6,
     })
 
-    // 全部完成：隐藏覆盖层
-    setModelStage('就绪', 100)
-    setTimeout(() => {
-      hideOverlay()
-      badge.textContent = '就绪，点击开始'
-      btn.textContent   = '开始检测'
-      btn.disabled      = false
-    }, 300)  // 短暂停留让进度条走满再消失
+    // 模型就绪，进度条走满，随后由 checkAccess() 接管覆盖层
+    setModelStage('加载完成，正在验证权限…', 100)
 
   } catch (e) {
     console.error('[init] 模型加载失败:', e)
@@ -880,17 +885,20 @@ async function init() {
 
     badge.textContent = '❌ 模型加载失败'
     btn.textContent   = '加载失败'
+
+    // 抛出错误，阻止后续 checkAccess() 调用
+    throw e
   }
 }
 
-// 重试按钮
+// 重试按钮：重新加载模型并重新鉴权
 document.getElementById('model-retry-btn')?.addEventListener('click', () => {
-  showOverlay('model-loading')
   setModelStage('正在重新加载…', 5)
-  init()
+  init().then(() => checkAccess()).catch(e => console.error('[retry]', e))
 })
 
-checkAccess().then(() => init()).catch(e => console.error('[init]', e))
+// 入口：先加载模型，模型就绪后才开始鉴权（试用计时从此刻起算）
+init().then(() => checkAccess()).catch(e => console.error('[init]', e))
 </script>
 </body>
 </html>
