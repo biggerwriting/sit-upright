@@ -226,8 +226,10 @@
 // ──────────────────────────────────────────────────────────────
 // 模型路径：优先本地（与 HTML 同目录），也可换成公网 URL
 const MODEL_PATH = './pose_landmarker_lite.task'
-const HUNCH_THRESHOLD = 0.18        // 头肩距阈值（与主项目一致）
-const ALERT_BAD_SECONDS = 5         // 连续弓腰超过此秒数高亮警告
+const AUDIO_PATH = './audio/posture-alert.mp3'
+const HUNCH_THRESHOLD    = 0.18   // 头肩距阈值（与主项目一致）
+const ALERT_BAD_SECONDS  = 5      // 连续弓腰超过此秒数：文字警告 + 首次语音
+const ALERT_REPEAT_SECS  = 30     // 语音警告后，每隔此秒数重复播放
 
 // MediaPipe 骨架连接
 const CONNECTIONS = [
@@ -261,9 +263,10 @@ let running      = false
 let lastIsHunch  = false         // 上一帧推理结果（供 tick 读取）
 
 // 统计（每秒更新）
-let goodSecs     = 0
-let badSecs      = 0
+let goodSecs      = 0
+let badSecs       = 0
 let continuousBad = 0            // 连续弓腰秒数
+let lastVoiceAt   = null         // 上次播放语音时的 continuousBad 值（null = 未播放过）
 
 // 时间轴段（{type:'good'|'bad', dur:number}[]）
 let segments     = []
@@ -284,7 +287,17 @@ function analyzePosture(lms) {
 }
 
 // ──────────────────────────────────────────────────────────────
-// 5. 时间轴渲染
+// 5. 语音提醒
+// ──────────────────────────────────────────────────────────────
+function playAudio() {
+  const audio = new Audio(AUDIO_PATH)
+  audio.play().catch(() => {
+    // 浏览器自动播放策略拒绝时静默处理（用户未交互过页面时会触发）
+  })
+}
+
+// ──────────────────────────────────────────────────────────────
+// 6. 时间轴渲染
 // ──────────────────────────────────────────────────────────────
 function renderTimeline(container, segs) {
   const total = segs.reduce((s, g) => s + g.dur, 0)
@@ -296,13 +309,19 @@ function renderTimeline(container, segs) {
 }
 
 // ──────────────────────────────────────────────────────────────
-// 6. 每秒统计 tick
+// 7. 每秒统计 tick
 // ──────────────────────────────────────────────────────────────
 function tick() {
   const isHunch = lastIsHunch
 
-  if (isHunch) { badSecs++;  continuousBad++ }
-  else          { goodSecs++; continuousBad = 0 }
+  if (isHunch) {
+    badSecs++
+    continuousBad++
+  } else {
+    goodSecs++
+    continuousBad = 0
+    lastVoiceAt   = null   // 坐正后重置，下次弓腰重新计时
+  }
 
   // 更新 badge
   if (!isHunch) {
@@ -314,6 +333,14 @@ function tick() {
   } else {
     badge.className = 'bad'
     badge.textContent = '检测到弓腰'
+  }
+
+  // 语音提醒：连续弓腰达到阈值后首次播放，之后每 ALERT_REPEAT_SECS 重复一次
+  if (isHunch && continuousBad >= ALERT_BAD_SECONDS) {
+    if (lastVoiceAt === null || continuousBad - lastVoiceAt >= ALERT_REPEAT_SECS) {
+      playAudio()
+      lastVoiceAt = continuousBad
+    }
   }
 
   // 更新数字
@@ -401,6 +428,7 @@ async function startDetection() {
 
   // 重置统计
   goodSecs = badSecs = continuousBad = 0
+  lastVoiceAt = null
   segments = []; curSegType = null; curSegDur = 0
   goodEl.textContent = badEl.textContent = totalEl.textContent = '0'
   timelineEl.innerHTML = ''
