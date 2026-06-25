@@ -104,6 +104,7 @@ cp /原目录/pose_landmarker_lite.task /新目录/
 - 实时摄像头坐姿推理（MediaPipe Pose Landmarker，WASM 在浏览器内运行）
 - 骨架关键点可视化叠加
 - 每秒统计好/坏坐姿秒数 + 连续弓腰警告
+- **语音提醒**：连续弓腰 5 秒播放 MP3 提示音，保持弓腰状态每 30 秒重复一次，坐正后重置
 - 坐姿时间轴（色块显示好/坏切换）
 - 停止后弹出本次检测报告（时长、优秀率）
 
@@ -113,6 +114,8 @@ cp /原目录/pose_landmarker_lite.task /新目录/
 good-sit/
 ├── posture-static-demo.html     ← 演示页（入口）
 ├── pose_landmarker_lite.task    ← 姿态模型（5.5 MB）
+├── audio/
+│   └── posture-alert.mp3        ← 语音提醒音频
 └── vendor/
     └── mediapipe/
         ├── vision_bundle.mjs    ← 推理库（从 node_modules 复制）
@@ -145,6 +148,15 @@ python3 -m http.server 8080
 然后在浏览器打开：**`http://localhost:8080/posture-static-demo.html`**
 
 > ⚠️ 必须通过 `http://localhost` 访问，不能直接双击文件（`file://` 协议无法申请摄像头权限）。
+
+### 注意事项
+
+| 事项 | 说明 |
+|------|------|
+| **需保持前台运行** | 检测循环基于 `requestAnimationFrame`，浏览器会在标签页切到后台时暂停或严重限速，导致检测和语音提醒停止工作。使用时请保持页面可见。 |
+| **语音首次触发** | 浏览器要求用户至少与页面有过一次交互（如点击「开始检测」）才允许播放音频；首次打开页面后直接自动播放会被拒绝。 |
+| **语音重复间隔** | 连续弓腰满 5 秒首次响铃，之后保持弓腰每隔 30 秒再次响铃；坐正后计数重置，下次弓腰重新从 5 秒开始计。 |
+| **替换提示音** | 将 `audio/posture-alert.mp3` 替换成任意 MP3 文件即可自定义提示音，无需修改代码。 |
 
 # 提高依赖库下载速度
 换清华镜像源
