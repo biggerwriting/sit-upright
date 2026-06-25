@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<!-- SEO -->
+<title>坐姿检测 · AI 实时提醒，告别驼背腰酸</title>
+<meta name="description" content="纯浏览器 AI 坐姿检测，无需下载安装。弓腰超 5 秒自动语音提醒，帮助久坐族、学生、远程工作者养成正确坐姿习惯，减少颈椎腰椎损伤。" />
+<meta name="keywords" content="坐姿检测,坐姿提醒,驼背提醒,久坐提醒,AI坐姿,颈椎保护,腰椎保护,在线坐姿检测" />
+<link rel="canonical" href="https://your-site.netlify.app/" />
+
+<!-- Open Graph -->
+<meta property="og:type"        content="website" />
+<meta property="og:title"       content="坐姿检测 · AI 实时提醒，告别驼背腰酸" />
+<meta property="og:description" content="纯浏览器 AI 坐姿检测，弓腰超 5 秒自动提醒。无需下载，隐私安全，摄像头数据不离开设备。" />
+<meta property="og:url"         content="https://your-site.netlify.app/" />
+<meta property="og:locale"      content="zh_CN" />
+
+<!-- JSON-LD 结构化数据 -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "坐姿检测",
+  "description": "基于 AI 的实时坐姿检测工具，弓腰超 5 秒自动语音提醒，帮助久坐人群养成健康坐姿习惯。",
+  "applicationCategory": "HealthApplication",
+  "operatingSystem": "Web Browser",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "CNY",
+    "description": "5 分钟免费试用"
+  }
+}
+</script>
+
+<style>
+:root {
+  --bg:        #080d14;
+  --bg-card:   #0f1923;
+  --bg-hover:  #14202e;
+  --border:    #1e2d3d;
+  --text:      #e2e8f0;
+  --muted:     #64748b;
+  --cyan:      #22d3ee;
+  --green:     #4ade80;
+  --purple:    #a78bfa;
+  --amber:     #fbbf24;
+  --radius:    12px;
+  --transition: .2s ease;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── 工具 ── */
+.container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+.tag {
+  display: inline-block;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(34,211,238,.12);
+  color: var(--cyan);
+  border: 1px solid rgba(34,211,238,.25);
+  margin-bottom: 16px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform var(--transition), box-shadow var(--transition), opacity var(--transition);
+  text-decoration: none;
+  border: none;
+}
+.btn:active { transform: scale(.97); }
+.btn-primary {
+  background: linear-gradient(135deg, #22d3ee, #4ade80);
+  color: #080d14;
+  box-shadow: 0 0 24px rgba(34,211,238,.35);
+}
+.btn-primary:hover { box-shadow: 0 0 40px rgba(34,211,238,.55); transform: translateY(-2px); }
+.btn-ghost {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { background: var(--bg-hover); border-color: var(--cyan); color: var(--cyan); transform: translateY(-2px); }
+
+/* ── 导航 ── */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  background: rgba(8,13,20,.8);
+  border-bottom: 1px solid var(--border);
+}
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+}
+.logo {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.logo span { color: var(--cyan); }
+.nav-cta { padding: 8px 22px; font-size: .9rem; }
+
+/* ── Hero ── */
+.hero {
+  padding: 96px 0 80px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -200px; left: 50%;
+  transform: translateX(-50%);
+  width: 800px; height: 600px;
+  background: radial-gradient(ellipse at center, rgba(34,211,238,.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 900;
+  line-height: 1.2;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #fff 40%, var(--cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-sub {
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+  color: var(--muted);
+  max-width: 580px;
+  margin: 0 auto 16px;
+}
+.hero-badges {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 40px;
+}
+.badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .82rem;
+  color: var(--muted);
+}
+.badge svg { width: 14px; height: 14px; color: var(--green); }
+.hero-btns {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.hero-note {
+  font-size: .78rem;
+  color: var(--muted);
+  margin-top: 16px;
+}
+
+/* ── 预览画面 ── */
+.preview {
+  padding: 0 0 80px;
+}
+.preview-frame {
+  max-width: 760px;
+  margin: 0 auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--bg-card);
+  box-shadow: 0 32px 80px rgba(0,0,0,.5), 0 0 0 1px rgba(34,211,238,.08);
+}
+.preview-bar {
+  background: #0a1525;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.preview-inner {
+  padding: 32px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: center;
+}
+@media (max-width: 580px) { .preview-inner { grid-template-columns: 1fr; } }
+.cam-mock {
+  aspect-ratio: 4/3;
+  background: #0a1525;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.cam-person {
+  width: 80px; height: 100px;
+  border-radius: 8px;
+  background: linear-gradient(160deg, #1e3a5f, #0f2640);
+  position: relative;
+}
+/* 简单骨架线 */
+.skel-line {
+  position: absolute;
+  background: rgba(34,211,238,.6);
+  border-radius: 2px;
+}
+.cam-badge-good {
+  position: absolute;
+  top: 10px; left: 50%; transform: translateX(-50%);
+  background: #16a34a;
+  color: #fff;
+  font-size: .72rem; font-weight: 700;
+  padding: 3px 12px;
+  border-radius: 999px;
+}
+.stat-panel { display: flex; flex-direction: column; gap: 14px; }
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #0a1525;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.stat-label { font-size: .8rem; color: var(--muted); }
+.stat-val { font-size: 1.3rem; font-weight: 700; }
+.stat-val.good { color: var(--green); }
+.stat-val.bad  { color: #fb923c; }
+.timeline-mock {
+  height: 18px;
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  gap: 2px;
+  background: #1a2942;
+}
+.tl-seg { border-radius: 3px; }
+
+/* ── 痛点 ── */
+.pain { padding: 80px 0; }
+.section-header { text-align: center; margin-bottom: 56px; }
+.section-header h2 {
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+.section-header p { color: var(--muted); max-width: 480px; margin: 0 auto; }
+.pain-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+.pain-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  transition: border-color var(--transition), transform var(--transition);
+}
+.pain-card:hover { border-color: var(--cyan); transform: translateY(-3px); }
+.pain-emoji { font-size: 2rem; margin-bottom: 16px; }
+.pain-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 10px; }
+.pain-card p  { font-size: .9rem; color: var(--muted); line-height: 1.7; }
+.pain-card .after {
+  margin-top: 16px;
+  padding: 10px 14px;
+  background: rgba(74,222,128,.06);
+  border: 1px solid rgba(74,222,128,.2);
+  border-radius: 8px;
+  font-size: .82rem;
+  color: var(--green);
+}
+
+/* ── 功能 ── */
+.features { padding: 80px 0; background: linear-gradient(180deg, transparent, rgba(34,211,238,.03), transparent); }
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+.feat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+}
+.feat-card:hover {
+  border-color: var(--cyan);
+  box-shadow: 0 0 24px rgba(34,211,238,.08);
+  transform: translateY(-3px);
+}
+.feat-icon {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem;
+  margin-bottom: 16px;
+}
+.feat-icon.cyan   { background: rgba(34,211,238,.12); }
+.feat-icon.green  { background: rgba(74,222,128,.12); }
+.feat-icon.purple { background: rgba(167,139,250,.12); }
+.feat-icon.amber  { background: rgba(251,191,36,.12); }
+.feat-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+.feat-card p  { font-size: .88rem; color: var(--muted); line-height: 1.7; }
+
+/* ── 效果对比 ── */
+.outcomes { padding: 80px 0; }
+.outcomes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  text-align: center;
+}
+.outcome-card {
+  padding: 40px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: transform var(--transition);
+}
+.outcome-card:hover { transform: translateY(-3px); }
+.outcome-num {
+  font-size: 2.8rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--cyan), var(--green));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  margin-bottom: 10px;
+}
+.outcome-card p { font-size: .88rem; color: var(--muted); }
+
+/* ── 使用步骤 ── */
+.how { padding: 80px 0; }
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0;
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+}
+.steps::before {
+  content: '';
+  position: absolute;
+  top: 28px; left: 0; right: 0;
+  height: 1px;
+  background: var(--border);
+}
+@media (max-width: 640px) { .steps::before { display: none; } }
+.step { padding: 0 24px; text-align: center; }
+.step-num {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 2px solid var(--cyan);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; font-weight: 800;
+  color: var(--cyan);
+  margin: 0 auto 20px;
+  position: relative; z-index: 1;
+  box-shadow: 0 0 20px rgba(34,211,238,.2);
+}
+.step h3 { font-size: .95rem; font-weight: 700; margin-bottom: 8px; }
+.step p   { font-size: .85rem; color: var(--muted); }
+
+/* ── CTA ── */
+.cta-section {
+  padding: 100px 0;
+  text-align: center;
+  position: relative;
+}
+.cta-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center bottom, rgba(74,222,128,.06), transparent 70%);
+  pointer-events: none;
+}
+.cta-section h2 {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 900;
+  margin-bottom: 16px;
+}
+.cta-section p { color: var(--muted); max-width: 480px; margin: 0 auto 40px; }
+.cta-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+.pricing-note {
+  margin-top: 32px;
+  font-size: .82rem;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ── Footer ── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 40px 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: .82rem;
+}
+footer a { color: var(--muted); text-decoration: none; }
+footer a:hover { color: var(--cyan); }
+
+/* ── 响应式 ── */
+@media (max-width: 480px) {
+  .hero { padding: 64px 0 48px; }
+  .pain, .features, .outcomes, .how, .cta-section { padding: 56px 0; }
+  .steps { gap: 32px; }
+}
+</style>
+</head>
+<body>
+
+<!-- 导航 -->
+<nav>
+  <div class="container nav-inner">
+    <a href="/" class="logo">🪑 坐姿<span>检测</span></a>
+    <a href="posture-static-demo.html" class="btn btn-primary nav-cta">免费试用</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="container">
+    <div class="tag">AI 驱动 · 纯浏览器运行</div>
+    <h1>弓腰 5 秒就提醒<br>告别腰酸背痛</h1>
+    <p class="hero-sub">打开网页，对准摄像头，开始工作。AI 全程监测你的坐姿，驼背时自动语音提醒。</p>
+    <div class="hero-badges">
+      <span class="badge">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+        无需下载安装
+      </span>
+      <span class="badge">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+        摄像头数据不离开设备
+      </span>
+      <span class="badge">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+        无需注册账号
+      </span>
+    </div>
+    <div class="hero-btns">
+      <a href="posture-static-demo.html" class="btn btn-primary">▶ 免费试用 5 分钟</a>
+      <a href="#features" class="btn btn-ghost">了解功能 ↓</a>
+    </div>
+    <p class="hero-note">试用无需付款 · 到期后可购买套餐继续使用</p>
+  </div>
+</section>
+
+<!-- UI 预览 -->
+<section class="preview">
+  <div class="container">
+    <div class="preview-frame">
+      <div class="preview-bar">
+        <div class="dot" style="background:#ff5f57"></div>
+        <div class="dot" style="background:#febc2e"></div>
+        <div class="dot" style="background:#28c840"></div>
+        <span style="font-size:.75rem;color:#4a5568;margin-left:8px">坐姿检测 · 运行中</span>
+      </div>
+      <div class="preview-inner">
+        <!-- 摄像头模拟 -->
+        <div class="cam-mock">
+          <div class="cam-badge-good">坐姿良好 ✓</div>
+          <div class="cam-person">
+            <!-- 简单骨架示意 -->
+            <div class="skel-line" style="width:30px;height:2px;top:20px;left:25px;transform:rotate(-5deg)"></div>
+            <div class="skel-line" style="width:2px;height:30px;top:22px;left:39px"></div>
+            <div class="skel-line" style="width:20px;height:2px;top:35px;left:20px;transform:rotate(20deg)"></div>
+            <div class="skel-line" style="width:20px;height:2px;top:35px;left:40px;transform:rotate(-20deg)"></div>
+          </div>
+        </div>
+        <!-- 统计面板 -->
+        <div class="stat-panel">
+          <div class="stat-row">
+            <span class="stat-label">优秀坐姿</span>
+            <span class="stat-val good">43s</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">不良坐姿</span>
+            <span class="stat-val bad">7s</span>
+          </div>
+          <div>
+            <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px">坐姿时间轴</div>
+            <div class="timeline-mock">
+              <div class="tl-seg" style="flex:6;background:#16a34a"></div>
+              <div class="tl-seg" style="flex:1;background:#ea580c"></div>
+              <div class="tl-seg" style="flex:2;background:#16a34a"></div>
+            </div>
+          </div>
+          <div style="padding:12px 16px;background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.2);border-radius:8px;font-size:.82rem;color:var(--green)">
+            ⏳ 配额剩余：45 分 17 秒
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 使用场景（痛点） -->
+<section class="pain" id="usecases">
+  <div class="container">
+    <div class="section-header">
+      <div class="tag">使用场景</div>
+      <h2>你是不是也有这些困扰？</h2>
+      <p>每天久坐数小时，腰酸背痛已成常态，却没有人提醒你</p>
+    </div>
+    <div class="pain-grid">
+      <article class="pain-card">
+        <div class="pain-emoji">💻</div>
+        <h3>程序员 / 设计师</h3>
+        <p>专注写代码时不知不觉整个人趴在屏幕前，等感到腰疼才发现已经弓背一两个小时了。</p>
+        <div class="after">✓ 开启检测后，弓腰 5 秒自动提醒，专注时也不会被遗忘</div>
+      </article>
+      <article class="pain-card">
+        <div class="pain-emoji">🏠</div>
+        <h3>在家远程办公</h3>
+        <p>没有公司环境约束，窝在沙发、床上随意工作，颈椎腰椎长期处于错误姿势，慢性损伤悄悄积累。</p>
+        <div class="after">✓ 随时打开浏览器，无论在哪都能监测坐姿</div>
+      </article>
+      <article class="pain-card">
+        <div class="pain-emoji">📚</div>
+        <h3>学生党备考</h3>
+        <p>长时间伏案刷题，驼背弓腰严重影响专注力，还带来肩颈酸痛，复习效率大打折扣。</p>
+        <div class="after">✓ 坐姿矫正后，身体更放松，专注力自然提升</div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- 功能介绍 -->
+<section class="features" id="features">
+  <div class="container">
+    <div class="section-header">
+      <div class="tag">核心功能</div>
+      <h2>一个工具，守护全天坐姿</h2>
+      <p>基于 Google MediaPipe AI，无需任何硬件，浏览器里直接运行</p>
+    </div>
+    <div class="features-grid">
+      <article class="feat-card">
+        <div class="feat-icon cyan">🎯</div>
+        <h3>实时骨骼姿态检测</h3>
+        <p>AI 每 0.2 秒识别一次头肩关键点，精准计算头肩比例，准确判断是否弓腰。坐正、弓背状态切换即刻响应。</p>
+      </article>
+      <article class="feat-card">
+        <div class="feat-icon green">🔊</div>
+        <h3>智能分级语音提醒</h3>
+        <p>弓腰超 5 秒自动播放语音提示；保持弓腰状态每 30 秒重复提醒；坐正后计时重置，下次弓腰重新开始计算。</p>
+      </article>
+      <article class="feat-card">
+        <div class="feat-icon purple">📊</div>
+        <h3>坐姿时间轴统计</h3>
+        <p>实时记录好/坏坐姿的每一秒，用颜色时间轴可视化展示，停止后弹出本次检测报告，一眼看出坐姿优秀率。</p>
+      </article>
+      <article class="feat-card">
+        <div class="feat-icon cyan">🔒</div>
+        <h3>完全本地推理，隐私安全</h3>
+        <p>所有 AI 运算在你的浏览器本地完成，摄像头画面不上传，不存储，不经过任何服务器。断网也能正常使用。</p>
+      </article>
+      <article class="feat-card">
+        <div class="feat-icon amber">🌙</div>
+        <h3>切换标签页继续检测</h3>
+        <p>检测循环基于系统定时器，切换到其他标签页工作后，坐姿检测和语音提醒仍然正常运行，不影响你的工作流。</p>
+      </article>
+      <article class="feat-card">
+        <div class="feat-icon green">⚡</div>
+        <h3>打开即用，零成本部署</h3>
+        <p>无需安装 App，无需注册账号，打开网页允许摄像头即可开始使用。支持 Chrome、Safari、Edge 等主流浏览器。</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- 效果数据 -->
+<section class="outcomes">
+  <div class="container">
+    <div class="section-header">
+      <div class="tag">预期效果</div>
+      <h2>坚持使用，效果看得见</h2>
+    </div>
+    <div class="outcomes-grid">
+      <div class="outcome-card">
+        <div class="outcome-num">−60%</div>
+        <p>每天弓腰时长<br>在 2 周内明显减少</p>
+      </div>
+      <div class="outcome-card">
+        <div class="outcome-num">3 周</div>
+        <p>形成肌肉记忆<br>自然保持正确坐姿</p>
+      </div>
+      <div class="outcome-card">
+        <div class="outcome-num">↑效率</div>
+        <p>身体不酸痛<br>专注力和工作状态更好</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 使用步骤 -->
+<section class="how" id="how">
+  <div class="container">
+    <div class="section-header">
+      <div class="tag">三步开始</div>
+      <h2>30 秒完成设置</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>打开检测页面</h3>
+        <p>点击「免费试用」，无需注册，首次可免费使用 5 分钟</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>允许摄像头权限</h3>
+        <p>画面在本地处理，不联网上传，放心授权</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>专注工作，坐歪就提醒</h3>
+        <p>弓腰 5 秒自动语音提醒，无需手动操作</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="container">
+    <h2>立刻开始保护你的颈椎腰椎</h2>
+    <p>免费试用 5 分钟，感受一下有人监督的感觉</p>
+    <div class="cta-btns">
+      <a href="posture-static-demo.html" class="btn btn-primary" style="font-size:1.1rem;padding:16px 40px">
+        ▶ 免费试用 5 分钟
+      </a>
+    </div>
+    <div class="pricing-note">
+      <span>5 分钟免费 · 到期后购买套餐继续使用</span>
+      <span>购买方式：加微信联系，转账后发送专属访问链接</span>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <p>🪑 坐姿检测 &nbsp;·&nbsp; AI 驱动，隐私安全</p>
+    <p style="margin-top:8px">
+      <a href="posture-static-demo.html">开始检测</a>
+      &nbsp;·&nbsp;
+      <a href="#features">功能介绍</a>
+      &nbsp;·&nbsp;
+      <a href="#usecases">使用场景</a>
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>

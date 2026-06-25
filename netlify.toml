@@ -1,4 +1,11 @@
 [build]
+  # 安装前端依赖并生成 vendor/（mediapipe wasm，gitignore 不提交故在此生成）
+  command = """
+    cd frontend && npm install && cd .. && \
+    mkdir -p vendor/mediapipe/wasm && \
+    cp frontend/node_modules/@mediapipe/tasks-vision/vision_bundle.mjs vendor/mediapipe/ && \
+    cp frontend/node_modules/@mediapipe/tasks-vision/wasm/* vendor/mediapipe/wasm/
+  """
   publish = "."     # 项目根目录作为静态资源目录
 
 # 安全响应头

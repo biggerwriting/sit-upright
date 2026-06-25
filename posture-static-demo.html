@@ -308,8 +308,8 @@
 // 1. 配置
 // ──────────────────────────────────────────────────────────────
 // ── 部署配置（填写你的 Supabase 项目 URL 和微信号）────────────
-const SUPABASE_FUNC_URL = 'https://YOUR_PROJECT_REF.supabase.co/functions/v1'
-const WECHAT_ID         = 'your_wechat_id'
+const SUPABASE_FUNC_URL = 'https://linyjbufejwrkpyaiqca.supabase.co/functions/v1'
+const WECHAT_ID         = 'until-yesterday'
 // ────────────────────────────────────────────────────────────────
 
 // 模型路径：优先本地（与 HTML 同目录），也可换成公网 URL
@@ -357,10 +357,11 @@ let running       = false
 let lastIsHunch   = false        // 上一帧推理结果（供 tick 读取）
 
 // 鉴权状态
-let accessMode  = null   // 'trial' | 'token'
-let quotaSecs   = 0      // 当前剩余秒数
-let activeToken = null   // URL token（token 模式时有值）
-let reportTimer = null   // 每 30s 上报用量的定时器句柄
+let accessMode     = null   // 'trial' | 'token'
+let quotaSecs      = 0      // 当前剩余秒数
+let activeToken    = null   // URL token（token 模式时有值）
+let reportTimer    = null   // 每 30s 上报用量的定时器句柄
+let unreportedSecs = 0      // 距上次上报后尚未同步到服务端的秒数
 
 // 统计（每秒更新）
 let goodSecs      = 0
@@ -569,6 +570,7 @@ function tick() {
   // 配额倒计时（试用和 token 模式都递减）
   if (running && quotaSecs > 0) {
     quotaSecs--
+    if (accessMode === 'token') unreportedSecs++   // 累计未上报秒数
     updateQuotaBar()
     if (quotaSecs === 0) {
       stopDetection(true)
@@ -640,6 +642,7 @@ async function startDetection() {
   // 重置统计
   goodSecs = badSecs = continuousBad = 0
   lastVoiceAt = null
+  unreportedSecs = 0
   segments = []; curSegType = null; curSegDur = 0
   goodEl.textContent = badEl.textContent = totalEl.textContent = '0'
   timelineEl.innerHTML = ''
@@ -661,6 +664,7 @@ async function startDetection() {
           body: JSON.stringify({ token: activeToken, seconds: 30 }),
         }).then(r => r.json()).catch(() => null)
         if (!running) return  // 用户已手动停止，丢弃 stale 回调
+        if (res) unreportedSecs = 0  // 上报成功，重置计数
         if (res?.status === 'exhausted') {
           stopDetection(true)
           showPaywall()
@@ -681,6 +685,17 @@ function stopDetection(skipReport = false) {
   if (detectTimer) { clearInterval(detectTimer); detectTimer = null }
   if (tickTimer)   { clearInterval(tickTimer);   tickTimer   = null }
   if (reportTimer) { clearInterval(reportTimer); reportTimer = null }
+
+  // 补上最后一段未上报的秒数（token 模式）
+  if (accessMode === 'token' && activeToken && unreportedSecs > 0) {
+    const secs = unreportedSecs
+    unreportedSecs = 0
+    fetch(`${SUPABASE_FUNC_URL}/update-usage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: activeToken, seconds: secs }),
+    }).catch(() => {})
+  }
 
   // 关闭摄像头
   const stream = video.srcObject
