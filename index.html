@@ -30,7 +30,7 @@
     "@type": "Offer",
     "price": "0",
     "priceCurrency": "CNY",
-    "description": "5 分钟免费试用"
+    "description": "完全免费"
   }
 }
 </script>
@@ -132,6 +132,51 @@ nav {
 }
 .logo span { color: var(--cyan); }
 .nav-cta { padding: 8px 22px; font-size: .9rem; }
+
+/* ── 语言切换器 ── */
+.lang-switcher { position: relative; }
+.lang-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: .8rem;
+  padding: 5px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: border-color var(--transition), color var(--transition);
+}
+.lang-btn:hover { border-color: var(--cyan); color: var(--text); }
+.lang-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  min-width: 110px;
+  z-index: 200;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+}
+.lang-menu.open { display: block; }
+.lang-menu button {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: .82rem;
+  padding: 9px 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.lang-menu button:hover { background: var(--bg-hover); color: var(--text); }
+.lang-menu button.active { color: var(--cyan); font-weight: 600; }
 
 /* ── Hero ── */
 .hero {
@@ -241,7 +286,6 @@ nav {
   background: linear-gradient(160deg, #1e3a5f, #0f2640);
   position: relative;
 }
-/* 简单骨架线 */
 .skel-line {
   position: absolute;
   background: rgba(34,211,238,.6);
@@ -540,7 +584,6 @@ footer a:hover { color: var(--cyan); }
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-LWPWYW9TYZ');
 </script>
 </head>
@@ -550,10 +593,23 @@ footer a:hover { color: var(--cyan); }
 <nav>
   <div class="container nav-inner">
     <a href="/" class="logo">🪑 坐姿<span>检测</span></a>
-    <div style="display:flex;align-items:center;gap:20px">
-      <a href="#pricing" style="font-size:.9rem;color:var(--muted);text-decoration:none;transition:color .2s"
-         onmouseover="this.style.color='var(--cyan)'" onmouseout="this.style.color='var(--muted)'">定价</a>
-      <a href="posture-static-demo.html" class="btn btn-primary nav-cta">免费试用</a>
+    <div style="display:flex;align-items:center;gap:16px">
+      <a href="#pricing" id="nav-pricing-link" style="font-size:.9rem;color:var(--muted);text-decoration:none;transition:color .2s"
+         onmouseover="this.style.color='var(--cyan)'" onmouseout="this.style.color='var(--muted)'"
+         data-i18n="nav-pricing">定价</a>
+
+      <!-- 语言切换器 -->
+      <div class="lang-switcher">
+        <button class="lang-btn" id="lang-btn">🌐 <span id="lang-label">中文</span> ▾</button>
+        <div class="lang-menu" id="lang-menu">
+          <button data-lang="zh">中文</button>
+          <button data-lang="en">English</button>
+          <button data-lang="fr">Français</button>
+          <button data-lang="es">Español</button>
+        </div>
+      </div>
+
+      <a href="free-demo.html" class="btn btn-primary nav-cta" data-i18n="nav-cta">免费体验</a>
     </div>
   </div>
 </nav>
@@ -561,28 +617,28 @@ footer a:hover { color: var(--cyan); }
 <!-- Hero -->
 <section class="hero">
   <div class="container">
-    <div class="tag">AI 驱动 · 纯浏览器运行</div>
-    <h1>弓腰 5 秒就提醒<br>告别腰酸背痛</h1>
-    <p class="hero-sub">打开网页，对准摄像头，开始工作。AI 全程监测你的坐姿，驼背时自动语音提醒。</p>
+    <div class="tag" data-i18n="hero-tag">AI 驱动 · 纯浏览器运行</div>
+    <h1 data-i18n-html="hero-h1">弓腰 5 秒就提醒<br>告别腰酸背痛</h1>
+    <p class="hero-sub" data-i18n="hero-sub">打开网页，对准摄像头，开始工作。AI 全程监测你的坐姿，驼背时自动语音提醒。</p>
     <div class="hero-badges">
       <span class="badge">
         <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-        无需下载安装
+        <span data-i18n="hero-badge-1">无需下载安装</span>
       </span>
       <span class="badge">
         <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-        摄像头数据不离开设备
+        <span data-i18n="hero-badge-2">摄像头数据不离开设备</span>
       </span>
       <span class="badge">
         <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-        无需注册账号
+        <span data-i18n="hero-badge-3">无需注册账号</span>
       </span>
     </div>
     <div class="hero-btns">
-      <a href="posture-static-demo.html" class="btn btn-primary">▶ 免费试用 5 分钟</a>
-      <a href="#features" class="btn btn-ghost">了解功能 ↓</a>
+      <a href="free-demo.html" class="btn btn-primary" data-i18n="hero-btn-primary">▶ 免费体验</a>
+      <a href="#features" class="btn btn-ghost" data-i18n="hero-btn-ghost">了解功能 ↓</a>
     </div>
-    <p class="hero-note">试用无需付款 · 到期后可购买套餐继续使用</p>
+    <p class="hero-note" data-i18n="hero-note">完全免费 · 无需付款 · 无需注册</p>
   </div>
 </section>
 
@@ -594,14 +650,13 @@ footer a:hover { color: var(--cyan); }
         <div class="dot" style="background:#ff5f57"></div>
         <div class="dot" style="background:#febc2e"></div>
         <div class="dot" style="background:#28c840"></div>
-        <span style="font-size:.75rem;color:#4a5568;margin-left:8px">坐姿检测 · 运行中</span>
+        <span style="font-size:.75rem;color:#4a5568;margin-left:8px" data-i18n="preview-status">坐姿检测 · 运行中</span>
       </div>
       <div class="preview-inner">
         <!-- 摄像头模拟 -->
         <div class="cam-mock">
-          <div class="cam-badge-good">坐姿良好 ✓</div>
+          <div class="cam-badge-good" data-i18n="preview-badge">坐姿良好 ✓</div>
           <div class="cam-person">
-            <!-- 简单骨架示意 -->
             <div class="skel-line" style="width:30px;height:2px;top:20px;left:25px;transform:rotate(-5deg)"></div>
             <div class="skel-line" style="width:2px;height:30px;top:22px;left:39px"></div>
             <div class="skel-line" style="width:20px;height:2px;top:35px;left:20px;transform:rotate(20deg)"></div>
@@ -611,23 +666,23 @@ footer a:hover { color: var(--cyan); }
         <!-- 统计面板 -->
         <div class="stat-panel">
           <div class="stat-row">
-            <span class="stat-label">优秀坐姿</span>
+            <span class="stat-label" data-i18n="label-good">优秀坐姿</span>
             <span class="stat-val good">43s</span>
           </div>
           <div class="stat-row">
-            <span class="stat-label">不良坐姿</span>
+            <span class="stat-label" data-i18n="label-bad">不良坐姿</span>
             <span class="stat-val bad">7s</span>
           </div>
           <div>
-            <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px">坐姿时间轴</div>
+            <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px" data-i18n="label-timeline">坐姿时间轴</div>
             <div class="timeline-mock">
               <div class="tl-seg" style="flex:6;background:#16a34a"></div>
               <div class="tl-seg" style="flex:1;background:#ea580c"></div>
               <div class="tl-seg" style="flex:2;background:#16a34a"></div>
             </div>
           </div>
-          <div style="padding:12px 16px;background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.2);border-radius:8px;font-size:.82rem;color:var(--green)">
-            ⏳ 配额剩余：45 分 17 秒
+          <div style="padding:12px 16px;background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.2);border-radius:8px;font-size:.82rem;color:var(--green)" data-i18n="preview-free">
+            ✓ 完全免费，无限使用
           </div>
         </div>
       </div>
@@ -639,28 +694,28 @@ footer a:hover { color: var(--cyan); }
 <section class="pain" id="usecases">
   <div class="container">
     <div class="section-header">
-      <div class="tag">使用场景</div>
-      <h2>你是不是也有这些困扰？</h2>
-      <p>每天久坐数小时，腰酸背痛已成常态，却没有人提醒你</p>
+      <div class="tag" data-i18n="pain-tag">使用场景</div>
+      <h2 data-i18n="pain-h2">你是不是也有这些困扰？</h2>
+      <p data-i18n="pain-sub">每天久坐数小时，腰酸背痛已成常态，却没有人提醒你</p>
     </div>
     <div class="pain-grid">
       <article class="pain-card">
         <div class="pain-emoji">💻</div>
-        <h3>程序员 / 设计师</h3>
-        <p>专注写代码时不知不觉整个人趴在屏幕前，等感到腰疼才发现已经弓背一两个小时了。</p>
-        <div class="after">✓ 开启检测后，弓腰 5 秒自动提醒，专注时也不会被遗忘</div>
+        <h3 data-i18n="pain-c1-h3">程序员 / 设计师</h3>
+        <p data-i18n="pain-c1-p">专注写代码时不知不觉整个人趴在屏幕前，等感到腰疼才发现已经弓背一两个小时了。</p>
+        <div class="after" data-i18n="pain-c1-after">✓ 开启检测后，弓腰 5 秒自动提醒，专注时也不会被遗忘</div>
       </article>
       <article class="pain-card">
         <div class="pain-emoji">🏠</div>
-        <h3>在家远程办公</h3>
-        <p>没有公司环境约束，窝在沙发、床上随意工作，颈椎腰椎长期处于错误姿势，慢性损伤悄悄积累。</p>
-        <div class="after">✓ 随时打开浏览器，无论在哪都能监测坐姿</div>
+        <h3 data-i18n="pain-c2-h3">在家远程办公</h3>
+        <p data-i18n="pain-c2-p">没有公司环境约束，窝在沙发、床上随意工作，颈椎腰椎长期处于错误姿势，慢性损伤悄悄积累。</p>
+        <div class="after" data-i18n="pain-c2-after">✓ 随时打开浏览器，无论在哪都能监测坐姿</div>
       </article>
       <article class="pain-card">
         <div class="pain-emoji">📚</div>
-        <h3>学生党备考</h3>
-        <p>长时间伏案刷题，驼背弓腰严重影响专注力，还带来肩颈酸痛，复习效率大打折扣。</p>
-        <div class="after">✓ 坐姿矫正后，身体更放松，专注力自然提升</div>
+        <h3 data-i18n="pain-c3-h3">学生党备考</h3>
+        <p data-i18n="pain-c3-p">长时间伏案刷题，驼背弓腰严重影响专注力，还带来肩颈酸痛，复习效率大打折扣。</p>
+        <div class="after" data-i18n="pain-c3-after">✓ 坐姿矫正后，身体更放松，专注力自然提升</div>
       </article>
     </div>
   </div>
@@ -670,40 +725,40 @@ footer a:hover { color: var(--cyan); }
 <section class="features" id="features">
   <div class="container">
     <div class="section-header">
-      <div class="tag">核心功能</div>
-      <h2>一个工具，守护全天坐姿</h2>
-      <p>基于 Google MediaPipe AI，无需任何硬件，浏览器里直接运行</p>
+      <div class="tag" data-i18n="feat-tag">核心功能</div>
+      <h2 data-i18n="feat-h2">一个工具，守护全天坐姿</h2>
+      <p data-i18n="feat-sub">基于 Google MediaPipe AI，无需任何硬件，浏览器里直接运行</p>
     </div>
     <div class="features-grid">
       <article class="feat-card">
         <div class="feat-icon cyan">🎯</div>
-        <h3>实时骨骼姿态检测</h3>
-        <p>AI 每 0.2 秒识别一次头肩关键点，精准计算头肩比例，准确判断是否弓腰。坐正、弓背状态切换即刻响应。</p>
+        <h3 data-i18n="feat-1-h3">实时骨骼姿态检测</h3>
+        <p data-i18n="feat-1-p">AI 每 0.2 秒识别一次头肩关键点，精准计算头肩比例，准确判断是否弓腰。坐正、弓背状态切换即刻响应。</p>
       </article>
       <article class="feat-card">
         <div class="feat-icon green">🔊</div>
-        <h3>智能分级语音提醒</h3>
-        <p>弓腰超 5 秒自动播放语音提示；保持弓腰状态每 30 秒重复提醒；坐正后计时重置，下次弓腰重新开始计算。</p>
+        <h3 data-i18n="feat-2-h3">智能分级语音提醒</h3>
+        <p data-i18n="feat-2-p">弓腰超 5 秒自动播放语音提示；保持弓腰状态每 30 秒重复提醒；坐正后计时重置，下次弓腰重新开始计算。</p>
       </article>
       <article class="feat-card">
         <div class="feat-icon purple">📊</div>
-        <h3>坐姿时间轴统计</h3>
-        <p>实时记录好/坏坐姿的每一秒，用颜色时间轴可视化展示，停止后弹出本次检测报告，一眼看出坐姿优秀率。</p>
+        <h3 data-i18n="feat-3-h3">坐姿时间轴统计</h3>
+        <p data-i18n="feat-3-p">实时记录好/坏坐姿的每一秒，用颜色时间轴可视化展示，停止后弹出本次检测报告，一眼看出坐姿优秀率。</p>
       </article>
       <article class="feat-card">
         <div class="feat-icon cyan">🔒</div>
-        <h3>完全本地推理，隐私安全</h3>
-        <p>所有 AI 运算在你的浏览器本地完成，摄像头画面不上传，不存储，不经过任何服务器。断网也能正常使用。</p>
+        <h3 data-i18n="feat-4-h3">完全本地推理，隐私安全</h3>
+        <p data-i18n="feat-4-p">所有 AI 运算在你的浏览器本地完成，摄像头画面不上传，不存储，不经过任何服务器。断网也能正常使用。</p>
       </article>
       <article class="feat-card">
         <div class="feat-icon amber">🌙</div>
-        <h3>切换标签页继续检测</h3>
-        <p>检测循环基于系统定时器，切换到其他标签页工作后，坐姿检测和语音提醒仍然正常运行，不影响你的工作流。</p>
+        <h3 data-i18n="feat-5-h3">切换标签页继续检测</h3>
+        <p data-i18n="feat-5-p">检测循环基于系统定时器，切换到其他标签页工作后，坐姿检测和语音提醒仍然正常运行，不影响你的工作流。</p>
       </article>
       <article class="feat-card">
         <div class="feat-icon green">⚡</div>
-        <h3>打开即用，零成本部署</h3>
-        <p>无需安装 App，无需注册账号，打开网页允许摄像头即可开始使用。支持 Chrome、Safari、Edge 等主流浏览器。</p>
+        <h3 data-i18n="feat-6-h3">打开即用，零成本部署</h3>
+        <p data-i18n="feat-6-p">无需安装 App，无需注册账号，打开网页允许摄像头即可开始使用。支持 Chrome、Safari、Edge 等主流浏览器。</p>
       </article>
     </div>
   </div>
@@ -713,21 +768,21 @@ footer a:hover { color: var(--cyan); }
 <section class="outcomes">
   <div class="container">
     <div class="section-header">
-      <div class="tag">预期效果</div>
-      <h2>坚持使用，效果看得见</h2>
+      <div class="tag" data-i18n="outcomes-tag">预期效果</div>
+      <h2 data-i18n="outcomes-h2">坚持使用，效果看得见</h2>
     </div>
     <div class="outcomes-grid">
       <div class="outcome-card">
         <div class="outcome-num">−60%</div>
-        <p>每天弓腰时长<br>在 2 周内明显减少</p>
+        <p data-i18n-html="outcome-1">每天弓腰时长<br>在 2 周内明显减少</p>
       </div>
       <div class="outcome-card">
         <div class="outcome-num">3 周</div>
-        <p>形成肌肉记忆<br>自然保持正确坐姿</p>
+        <p data-i18n-html="outcome-2">形成肌肉记忆<br>自然保持正确坐姿</p>
       </div>
       <div class="outcome-card">
         <div class="outcome-num">↑效率</div>
-        <p>身体不酸痛<br>专注力和工作状态更好</p>
+        <p data-i18n-html="outcome-3">身体不酸痛<br>专注力和工作状态更好</p>
       </div>
     </div>
   </div>
@@ -737,24 +792,24 @@ footer a:hover { color: var(--cyan); }
 <section class="how" id="how">
   <div class="container">
     <div class="section-header">
-      <div class="tag">三步开始</div>
-      <h2>30 秒完成设置</h2>
+      <div class="tag" data-i18n="how-tag">三步开始</div>
+      <h2 data-i18n="how-h2">30 秒完成设置</h2>
     </div>
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
-        <h3>打开检测页面</h3>
-        <p>点击「免费试用」，无需注册，首次可免费使用 5 分钟</p>
+        <h3 data-i18n="step-1-h3">打开检测页面</h3>
+        <p data-i18n="step-1-p">点击「免费体验」，无需注册，永久免费</p>
       </div>
       <div class="step">
         <div class="step-num">2</div>
-        <h3>允许摄像头权限</h3>
-        <p>画面在本地处理，不联网上传，放心授权</p>
+        <h3 data-i18n="step-2-h3">允许摄像头权限</h3>
+        <p data-i18n="step-2-p">画面在本地处理，不联网上传，放心授权</p>
       </div>
       <div class="step">
         <div class="step-num">3</div>
-        <h3>专注工作，坐歪就提醒</h3>
-        <p>弓腰 5 秒自动语音提醒，无需手动操作</p>
+        <h3 data-i18n="step-3-h3">专注工作，坐歪就提醒</h3>
+        <p data-i18n="step-3-p">弓腰 5 秒自动语音提醒，无需手动操作</p>
       </div>
     </div>
   </div>
@@ -764,15 +819,15 @@ footer a:hover { color: var(--cyan); }
 <section class="pricing" id="pricing">
   <div class="container">
     <div class="section-header">
-      <div class="tag">套餐价格</div>
-      <h2>按需购买，没有订阅</h2>
-      <p>一次购买，用完为止，不自动续费。加微信转账后，发给你专属访问链接。</p>
+      <div class="tag" data-i18n="pricing-tag">套餐价格</div>
+      <h2 data-i18n="pricing-h2">按需购买，没有订阅</h2>
+      <p data-i18n="pricing-sub">一次购买，用完为止，不自动续费。加微信转账后，发给你专属访问链接。</p>
     </div>
     <div class="pricing-grid">
 
       <!-- 套餐 1 -->
       <div class="plan-card">
-        <div class="plan-name">入门体验</div>
+        <div class="plan-name" data-i18n="plan-1-name">入门体验</div>
         <div class="plan-price">
           <span class="currency">¥</span>
           <span class="amount">3</span>
@@ -781,22 +836,22 @@ footer a:hover { color: var(--cyan); }
         <div class="plan-specs">
           <div class="plan-spec">
             <span class="plan-spec-icon">⏱</span>
-            <span class="plan-spec-val">3 小时</span>
-            <span class="plan-spec-label">检测用量</span>
+            <span class="plan-spec-val" data-i18n="plan-1-hours">3 小时</span>
+            <span class="plan-spec-label" data-i18n="plan-1-label-hours">检测用量</span>
           </div>
           <div class="plan-spec">
             <span class="plan-spec-icon">📅</span>
-            <span class="plan-spec-val">7 天</span>
-            <span class="plan-spec-label">链接有效期</span>
+            <span class="plan-spec-val" data-i18n="plan-1-days">7 天</span>
+            <span class="plan-spec-label" data-i18n="plan-1-label-days">链接有效期</span>
           </div>
         </div>
-        <div class="plan-per-hour">约 <strong>¥1 / 小时</strong></div>
+        <div class="plan-per-hour" data-i18n-html="plan-1-per">约 <strong>¥1 / 小时</strong></div>
       </div>
 
       <!-- 套餐 2（推荐） -->
       <div class="plan-card featured">
-        <div class="plan-badge">🔥 最受欢迎</div>
-        <div class="plan-name">标准使用</div>
+        <div class="plan-badge" data-i18n="plan-2-badge">🔥 最受欢迎</div>
+        <div class="plan-name" data-i18n="plan-2-name">标准使用</div>
         <div class="plan-price">
           <span class="currency">¥</span>
           <span class="amount">24</span>
@@ -805,21 +860,21 @@ footer a:hover { color: var(--cyan); }
         <div class="plan-specs">
           <div class="plan-spec">
             <span class="plan-spec-icon">⏱</span>
-            <span class="plan-spec-val">60 小时</span>
-            <span class="plan-spec-label">检测用量</span>
+            <span class="plan-spec-val" data-i18n="plan-2-hours">60 小时</span>
+            <span class="plan-spec-label" data-i18n="plan-2-label-hours">检测用量</span>
           </div>
           <div class="plan-spec">
             <span class="plan-spec-icon">📅</span>
-            <span class="plan-spec-val">14 天</span>
-            <span class="plan-spec-label">链接有效期</span>
+            <span class="plan-spec-val" data-i18n="plan-2-days">14 天</span>
+            <span class="plan-spec-label" data-i18n="plan-2-label-days">链接有效期</span>
           </div>
         </div>
-        <div class="plan-per-hour">约 <strong>¥0.40 / 小时</strong>，省 60%</div>
+        <div class="plan-per-hour" data-i18n-html="plan-2-per">约 <strong>¥0.40 / 小时</strong>，省 60%</div>
       </div>
 
       <!-- 套餐 3 -->
       <div class="plan-card">
-        <div class="plan-name">长期坚持</div>
+        <div class="plan-name" data-i18n="plan-3-name">长期坚持</div>
         <div class="plan-price">
           <span class="currency">¥</span>
           <span class="amount">30</span>
@@ -828,23 +883,23 @@ footer a:hover { color: var(--cyan); }
         <div class="plan-specs">
           <div class="plan-spec">
             <span class="plan-spec-icon">⏱</span>
-            <span class="plan-spec-val">300 小时</span>
-            <span class="plan-spec-label">检测用量</span>
+            <span class="plan-spec-val" data-i18n="plan-3-hours">300 小时</span>
+            <span class="plan-spec-label" data-i18n="plan-3-label-hours">检测用量</span>
           </div>
           <div class="plan-spec">
             <span class="plan-spec-icon">📅</span>
-            <span class="plan-spec-val">30 天</span>
-            <span class="plan-spec-label">链接有效期</span>
+            <span class="plan-spec-val" data-i18n="plan-3-days">30 天</span>
+            <span class="plan-spec-label" data-i18n="plan-3-label-days">链接有效期</span>
           </div>
         </div>
-        <div class="plan-per-hour">约 <strong>¥0.10 / 小时</strong>，最超值</div>
+        <div class="plan-per-hour" data-i18n-html="plan-3-per">约 <strong>¥0.10 / 小时</strong>，最超值</div>
       </div>
 
     </div>
 
     <p style="text-align:center;margin-top:32px;font-size:.85rem;color:var(--muted)">
-      购买前可先免费试用 5 分钟 ·
-      <a href="posture-static-demo.html" style="color:var(--cyan);text-decoration:none">立即体验 →</a>
+      <span data-i18n="pricing-note">购买前可先免费体验 ·</span>
+      <a href="free-demo.html" style="color:var(--cyan);text-decoration:none" data-i18n="pricing-note-link">立即体验 →</a>
     </p>
   </div>
 </section>
@@ -852,16 +907,16 @@ footer a:hover { color: var(--cyan); }
 <!-- CTA -->
 <section class="cta-section">
   <div class="container">
-    <h2>立刻开始保护你的颈椎腰椎</h2>
-    <p>免费试用 5 分钟，感受一下有人监督的感觉</p>
+    <h2 data-i18n="cta-h2">立刻开始保护你的颈椎腰椎</h2>
+    <p data-i18n="cta-p">完全免费，无需注册，打开即用</p>
     <div class="cta-btns">
-      <a href="posture-static-demo.html" class="btn btn-primary" style="font-size:1.1rem;padding:16px 40px">
-        ▶ 免费试用 5 分钟
+      <a href="free-demo.html" class="btn btn-primary" style="font-size:1.1rem;padding:16px 40px" data-i18n="cta-btn">
+        ▶ 免费体验
       </a>
     </div>
     <div class="pricing-note">
-      <span>5 分钟免费 · 到期后购买套餐继续使用</span>
-      <span>购买方式：加小助理微信联系，转账后发送专属访问链接</span>
+      <span data-i18n="cta-note-1">完全免费 · 无需付款 · 无需注册</span>
+      <span data-i18n="cta-note-2">摄像头数据不离开你的设备，隐私安全有保障</span>
     </div>
   </div>
 </section>
@@ -869,9 +924,9 @@ footer a:hover { color: var(--cyan); }
 <!-- 微信联系 -->
 <section style="padding:60px 0 80px;text-align:center;border-top:1px solid var(--border)">
   <div class="container">
-    <div class="tag">购买 / 咨询</div>
-    <h2 style="font-size:clamp(1.4rem,3vw,2rem);font-weight:800;margin-bottom:12px">扫码加微信</h2>
-    <p style="color:var(--muted);margin-bottom:32px;font-size:.95rem">
+    <div class="tag" data-i18n="wechat-tag">购买 / 咨询</div>
+    <h2 style="font-size:clamp(1.4rem,3vw,2rem);font-weight:800;margin-bottom:12px" data-i18n="wechat-h2">扫码加微信</h2>
+    <p style="color:var(--muted);margin-bottom:32px;font-size:.95rem" data-i18n="wechat-p">
       转账后说明购买的套餐，发给你专属访问链接
     </p>
     <img
@@ -881,11 +936,10 @@ footer a:hover { color: var(--cyan); }
              border:2px solid var(--border);box-shadow:0 0 32px rgba(34,211,238,.1);
              margin-bottom:20px"
     />
-    <!-- 微信号：与 posture-static-demo.html 顶部 WECHAT_ID 保持一致 -->
     <p style="font-size:1rem;font-weight:700;color:var(--green);letter-spacing:.05em">
       until-yesterday
     </p>
-    <p style="font-size:.8rem;color:var(--muted);margin-top:8px">
+    <p style="font-size:.8rem;color:var(--muted);margin-top:8px" data-i18n="wechat-hint">
       也可直接搜索微信号添加
     </p>
   </div>
@@ -894,16 +948,486 @@ footer a:hover { color: var(--cyan); }
 <!-- Footer -->
 <footer>
   <div class="container">
-    <p>🪑 坐姿检测 &nbsp;·&nbsp; AI 驱动，隐私安全</p>
+    <p data-i18n="footer-brand">🪑 坐姿检测 &nbsp;·&nbsp; AI 驱动，隐私安全</p>
     <p style="margin-top:8px">
-      <a href="posture-static-demo.html">开始检测</a>
+      <a href="free-demo.html" data-i18n="footer-link-start">开始检测</a>
       &nbsp;·&nbsp;
-      <a href="#features">功能介绍</a>
+      <a href="#features" data-i18n="footer-link-features">功能介绍</a>
       &nbsp;·&nbsp;
-      <a href="#usecases">使用场景</a>
+      <a href="#usecases" data-i18n="footer-link-cases">使用场景</a>
     </p>
   </div>
 </footer>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     i18n System
+═══════════════════════════════════════════════════════════════ -->
+<script>
+;(function () {
+  const TRANSLATIONS = {
+    zh: {
+      'nav-pricing': '定价',
+      'nav-cta': '免费体验',
+      'hero-tag': 'AI 驱动 · 纯浏览器运行',
+      'hero-h1': '弓腰 5 秒就提醒<br>告别腰酸背痛',
+      'hero-sub': '打开网页，对准摄像头，开始工作。AI 全程监测你的坐姿，驼背时自动语音提醒。',
+      'hero-badge-1': '无需下载安装',
+      'hero-badge-2': '摄像头数据不离开设备',
+      'hero-badge-3': '无需注册账号',
+      'hero-btn-primary': '▶ 免费体验',
+      'hero-btn-ghost': '了解功能 ↓',
+      'hero-note': '完全免费 · 无需付款 · 无需注册',
+      'preview-status': '坐姿检测 · 运行中',
+      'preview-badge': '坐姿良好 ✓',
+      'preview-free': '✓ 完全免费，无限使用',
+      'label-good': '优秀坐姿',
+      'label-bad': '不良坐姿',
+      'label-timeline': '坐姿时间轴',
+      'pain-tag': '使用场景',
+      'pain-h2': '你是不是也有这些困扰？',
+      'pain-sub': '每天久坐数小时，腰酸背痛已成常态，却没有人提醒你',
+      'pain-c1-h3': '程序员 / 设计师',
+      'pain-c1-p': '专注写代码时不知不觉整个人趴在屏幕前，等感到腰疼才发现已经弓背一两个小时了。',
+      'pain-c1-after': '✓ 开启检测后，弓腰 5 秒自动提醒，专注时也不会被遗忘',
+      'pain-c2-h3': '在家远程办公',
+      'pain-c2-p': '没有公司环境约束，窝在沙发、床上随意工作，颈椎腰椎长期处于错误姿势，慢性损伤悄悄积累。',
+      'pain-c2-after': '✓ 随时打开浏览器，无论在哪都能监测坐姿',
+      'pain-c3-h3': '学生党备考',
+      'pain-c3-p': '长时间伏案刷题，驼背弓腰严重影响专注力，还带来肩颈酸痛，复习效率大打折扣。',
+      'pain-c3-after': '✓ 坐姿矫正后，身体更放松，专注力自然提升',
+      'feat-tag': '核心功能',
+      'feat-h2': '一个工具，守护全天坐姿',
+      'feat-sub': '基于 Google MediaPipe AI，无需任何硬件，浏览器里直接运行',
+      'feat-1-h3': '实时骨骼姿态检测',
+      'feat-1-p': 'AI 每 0.2 秒识别一次头肩关键点，精准计算头肩比例，准确判断是否弓腰。坐正、弓背状态切换即刻响应。',
+      'feat-2-h3': '智能分级语音提醒',
+      'feat-2-p': '弓腰超 5 秒自动播放语音提示；保持弓腰状态每 30 秒重复提醒；坐正后计时重置，下次弓腰重新开始计算。',
+      'feat-3-h3': '坐姿时间轴统计',
+      'feat-3-p': '实时记录好/坏坐姿的每一秒，用颜色时间轴可视化展示，停止后弹出本次检测报告，一眼看出坐姿优秀率。',
+      'feat-4-h3': '完全本地推理，隐私安全',
+      'feat-4-p': '所有 AI 运算在你的浏览器本地完成，摄像头画面不上传，不存储，不经过任何服务器。断网也能正常使用。',
+      'feat-5-h3': '切换标签页继续检测',
+      'feat-5-p': '检测循环基于系统定时器，切换到其他标签页工作后，坐姿检测和语音提醒仍然正常运行，不影响你的工作流。',
+      'feat-6-h3': '打开即用，零成本部署',
+      'feat-6-p': '无需安装 App，无需注册账号，打开网页允许摄像头即可开始使用。支持 Chrome、Safari、Edge 等主流浏览器。',
+      'outcomes-tag': '预期效果',
+      'outcomes-h2': '坚持使用，效果看得见',
+      'outcome-1': '每天弓腰时长<br>在 2 周内明显减少',
+      'outcome-2': '形成肌肉记忆<br>自然保持正确坐姿',
+      'outcome-3': '身体不酸痛<br>专注力和工作状态更好',
+      'how-tag': '三步开始',
+      'how-h2': '30 秒完成设置',
+      'step-1-h3': '打开检测页面',
+      'step-1-p': '点击「免费体验」，无需注册，永久免费',
+      'step-2-h3': '允许摄像头权限',
+      'step-2-p': '画面在本地处理，不联网上传，放心授权',
+      'step-3-h3': '专注工作，坐歪就提醒',
+      'step-3-p': '弓腰 5 秒自动语音提醒，无需手动操作',
+      'pricing-tag': '套餐价格',
+      'pricing-h2': '按需购买，没有订阅',
+      'pricing-sub': '一次购买，用完为止，不自动续费。加微信转账后，发给你专属访问链接。',
+      'plan-1-name': '入门体验',
+      'plan-1-hours': '3 小时',
+      'plan-1-label-hours': '检测用量',
+      'plan-1-days': '7 天',
+      'plan-1-label-days': '链接有效期',
+      'plan-1-per': '约 <strong>¥1 / 小时</strong>',
+      'plan-2-badge': '🔥 最受欢迎',
+      'plan-2-name': '标准使用',
+      'plan-2-hours': '60 小时',
+      'plan-2-label-hours': '检测用量',
+      'plan-2-days': '14 天',
+      'plan-2-label-days': '链接有效期',
+      'plan-2-per': '约 <strong>¥0.40 / 小时</strong>，省 60%',
+      'plan-3-name': '长期坚持',
+      'plan-3-hours': '300 小时',
+      'plan-3-label-hours': '检测用量',
+      'plan-3-days': '30 天',
+      'plan-3-label-days': '链接有效期',
+      'plan-3-per': '约 <strong>¥0.10 / 小时</strong>，最超值',
+      'pricing-note': '购买前可先免费体验 ·',
+      'pricing-note-link': '立即体验 →',
+      'cta-h2': '立刻开始保护你的颈椎腰椎',
+      'cta-p': '完全免费，无需注册，打开即用',
+      'cta-btn': '▶ 免费体验',
+      'cta-note-1': '完全免费 · 无需付款 · 无需注册',
+      'cta-note-2': '摄像头数据不离开你的设备，隐私安全有保障',
+      'wechat-tag': '购买 / 咨询',
+      'wechat-h2': '扫码加微信',
+      'wechat-p': '转账后说明购买的套餐，发给你专属访问链接',
+      'wechat-hint': '也可直接搜索微信号添加',
+      'footer-brand': '🪑 坐姿检测 · AI 驱动，隐私安全',
+      'footer-link-start': '开始检测',
+      'footer-link-features': '功能介绍',
+      'footer-link-cases': '使用场景',
+      'lang-label': '中文',
+    },
+
+    en: {
+      'nav-pricing': 'Pricing',
+      'nav-cta': 'Try Free',
+      'hero-tag': 'AI-Powered · Runs in Your Browser',
+      'hero-h1': 'Slouch 5 Seconds,<br>Get Reminded Instantly',
+      'hero-sub': 'Open the page, face your camera, and start working. AI monitors your posture in real time and alerts you the moment you hunch.',
+      'hero-badge-1': 'No download required',
+      'hero-badge-2': 'Camera data stays on your device',
+      'hero-badge-3': 'No account needed',
+      'hero-btn-primary': '▶ Try for Free',
+      'hero-btn-ghost': 'Learn More ↓',
+      'hero-note': 'Completely free · No payment · No registration',
+      'preview-status': 'Posture Monitor · Running',
+      'preview-badge': 'Good posture ✓',
+      'preview-free': '✓ Completely free, unlimited use',
+      'label-good': 'Good posture',
+      'label-bad': 'Poor posture',
+      'label-timeline': 'Posture timeline',
+      'pain-tag': 'Use Cases',
+      'pain-h2': 'Sound familiar?',
+      'pain-sub': 'Sitting for hours every day, back pain has become normal — but nobody reminds you',
+      'pain-c1-h3': 'Developers & Designers',
+      'pain-c1-p': 'Deep in the zone, you inch closer to the screen without noticing — by the time your back hurts, you\'ve been hunching for hours.',
+      'pain-c1-after': '✓ Detection on: hunch 5 s → instant reminder, even in deep focus',
+      'pain-c2-h3': 'Remote Workers',
+      'pain-c2-p': 'No office norms at home — slouched on the couch or in bed. Chronic damage silently accumulates in your neck and lower back.',
+      'pain-c2-after': '✓ Open any browser, monitor your posture anywhere',
+      'pain-c3-h3': 'Students Studying',
+      'pain-c3-p': 'Hours of hunching over textbooks tank your focus and cause shoulder and neck pain, dragging down your study efficiency.',
+      'pain-c3-after': '✓ Better posture → more relaxed body → natural focus boost',
+      'feat-tag': 'Features',
+      'feat-h2': 'One Tool, All-Day Posture Guard',
+      'feat-sub': 'Powered by Google MediaPipe AI — no hardware needed, runs entirely in your browser',
+      'feat-1-h3': 'Real-Time Skeleton Detection',
+      'feat-1-p': 'AI analyzes your head and shoulder keypoints every 0.2 s, calculates proportions, and instantly detects hunching. Good ↔ bad transitions respond immediately.',
+      'feat-2-h3': 'Smart Tiered Voice Alerts',
+      'feat-2-p': 'Voice alert fires after 5 s of continuous hunching; repeats every 30 s while you stay hunched; resets the moment you sit up straight.',
+      'feat-3-h3': 'Posture Timeline Stats',
+      'feat-3-p': 'Every second of good and bad posture is recorded and color-visualized on a timeline. A session report pops up when you stop.',
+      'feat-4-h3': 'Fully Local AI, Privacy-Safe',
+      'feat-4-p': 'All inference runs in your browser. Camera footage is never uploaded, stored, or sent to any server. Works offline.',
+      'feat-5-h3': 'Works Behind Other Tabs',
+      'feat-5-p': 'Detection runs on a system timer, so switching to another tab doesn\'t pause monitoring. Voice alerts still fire while you work.',
+      'feat-6-h3': 'Open & Use, Zero Setup',
+      'feat-6-p': 'No app, no account, no install. Open the page, allow camera access, done. Works on Chrome, Safari, Edge and all major browsers.',
+      'outcomes-tag': 'Expected Results',
+      'outcomes-h2': 'Stick with it — results you can see',
+      'outcome-1': 'Daily hunching time<br>drops significantly in 2 weeks',
+      'outcome-2': 'Muscle memory forms<br>correct posture becomes natural',
+      'outcome-3': 'No more aches<br>better focus and energy',
+      'how-tag': '3 Steps',
+      'how-h2': 'Set Up in 30 Seconds',
+      'step-1-h3': 'Open the App',
+      'step-1-p': 'Click "Try for Free" — no registration, free forever',
+      'step-2-h3': 'Allow Camera Access',
+      'step-2-p': 'Video is processed locally, never uploaded — safe to allow',
+      'step-3-h3': 'Work, Get Reminded',
+      'step-3-p': 'Auto voice alert after 5 s of hunching — no manual steps needed',
+      'pricing-tag': 'Pricing',
+      'pricing-h2': 'Pay Once, No Subscription',
+      'pricing-sub': 'One-time purchase. Contact us on WeChat, pay, and receive your personal access link.',
+      'plan-1-name': 'Starter',
+      'plan-1-hours': '3 hours',
+      'plan-1-label-hours': 'Detection quota',
+      'plan-1-days': '7 days',
+      'plan-1-label-days': 'Link validity',
+      'plan-1-per': '~<strong>¥1 / hour</strong>',
+      'plan-2-badge': '🔥 Most Popular',
+      'plan-2-name': 'Standard',
+      'plan-2-hours': '60 hours',
+      'plan-2-label-hours': 'Detection quota',
+      'plan-2-days': '14 days',
+      'plan-2-label-days': 'Link validity',
+      'plan-2-per': '~<strong>¥0.40 / hour</strong>, save 60%',
+      'plan-3-name': 'Long-Term',
+      'plan-3-hours': '300 hours',
+      'plan-3-label-hours': 'Detection quota',
+      'plan-3-days': '30 days',
+      'plan-3-label-days': 'Link validity',
+      'plan-3-per': '~<strong>¥0.10 / hour</strong>, best value',
+      'pricing-note': 'Try it free before buying ·',
+      'pricing-note-link': 'Start now →',
+      'cta-h2': 'Start Protecting Your Spine Today',
+      'cta-p': 'Completely free — no registration, open and use',
+      'cta-btn': '▶ Try for Free',
+      'cta-note-1': 'Completely free · No payment · No registration',
+      'cta-note-2': 'Camera data never leaves your device — your privacy is protected',
+      'wechat-tag': 'Buy / Contact',
+      'wechat-h2': 'Scan to Add on WeChat',
+      'wechat-p': 'Pay and tell us which plan — we\'ll send your access link',
+      'wechat-hint': 'Or search WeChat ID directly',
+      'footer-brand': '🪑 SitUpright · AI-Powered, Privacy-Safe',
+      'footer-link-start': 'Start',
+      'footer-link-features': 'Features',
+      'footer-link-cases': 'Use Cases',
+      'lang-label': 'English',
+    },
+
+    fr: {
+      'nav-pricing': 'Tarifs',
+      'nav-cta': 'Essai gratuit',
+      'hero-tag': 'IA · Dans votre navigateur',
+      'hero-h1': 'Courbé 5 secondes,<br>alerte immédiate',
+      'hero-sub': 'Ouvrez la page, faites face à la caméra, travaillez. L\'IA surveille votre posture en permanence et vous alerte dès que vous vous courbez.',
+      'hero-badge-1': 'Sans téléchargement',
+      'hero-badge-2': 'Données caméra sur votre appareil',
+      'hero-badge-3': 'Sans inscription',
+      'hero-btn-primary': '▶ Essai gratuit',
+      'hero-btn-ghost': 'En savoir plus ↓',
+      'hero-note': 'Entièrement gratuit · Sans paiement · Sans inscription',
+      'preview-status': 'Surveillance posture · En cours',
+      'preview-badge': 'Bonne posture ✓',
+      'preview-free': '✓ Entièrement gratuit, utilisation illimitée',
+      'label-good': 'Bonne posture',
+      'label-bad': 'Mauvaise posture',
+      'label-timeline': 'Chronologie',
+      'pain-tag': 'Cas d\'usage',
+      'pain-h2': 'Vous reconnaissez-vous ?',
+      'pain-sub': 'Des heures assis chaque jour, le mal de dos est devenu normal — sans que personne ne vous rappelle',
+      'pain-c1-h3': 'Développeurs & Designers',
+      'pain-c1-p': 'Concentré sur votre code, vous vous penchez sans vous en rendre compte — quand vous sentez la douleur, cela fait déjà une heure.',
+      'pain-c1-after': '✓ Détection active : courbé 5 s → rappel immédiat, même en pleine concentration',
+      'pain-c2-h3': 'Télétravail',
+      'pain-c2-p': 'Sans les normes du bureau, avachi sur le canapé ou au lit — des dommages chroniques s\'accumulent silencieusement.',
+      'pain-c2-after': '✓ Ouvrez n\'importe quel navigateur, surveillez votre posture partout',
+      'pain-c3-h3': 'Étudiants',
+      'pain-c3-p': 'Des heures courbé sur vos livres, votre concentration en pâtit et vos épaules vous font mal.',
+      'pain-c3-after': '✓ Meilleure posture → corps détendu → concentration naturelle',
+      'feat-tag': 'Fonctionnalités',
+      'feat-h2': 'Un outil, toute la journée',
+      'feat-sub': 'Propulsé par Google MediaPipe IA — aucun matériel requis, tout dans le navigateur',
+      'feat-1-h3': 'Détection squelettique temps réel',
+      'feat-1-p': 'L\'IA analyse vos points clés tête-épaules toutes les 0,2 s et détecte instantanément tout affaissement.',
+      'feat-2-h3': 'Alertes vocales intelligentes',
+      'feat-2-p': 'Alerte vocale après 5 s de courbure continue ; répétition toutes les 30 s ; réinitialisation dès que vous vous redressez.',
+      'feat-3-h3': 'Chronologie de posture',
+      'feat-3-p': 'Chaque seconde de bonne ou mauvaise posture est enregistrée et visualisée. Un rapport de session s\'affiche à l\'arrêt.',
+      'feat-4-h3': 'IA locale, vie privée protégée',
+      'feat-4-p': 'Toute l\'inférence se fait dans votre navigateur. Aucune image n\'est téléversée, stockée ou envoyée. Fonctionne hors ligne.',
+      'feat-5-h3': 'Fonctionne en arrière-plan',
+      'feat-5-p': 'La détection tourne sur un minuteur système — changer d\'onglet ne suspend pas la surveillance.',
+      'feat-6-h3': 'Ouvrir et utiliser, zéro installation',
+      'feat-6-p': 'Pas d\'appli, pas de compte, pas d\'installation. Ouvrez la page, autorisez la caméra, c\'est parti.',
+      'outcomes-tag': 'Résultats attendus',
+      'outcomes-h2': 'Persévérez — les résultats sont visibles',
+      'outcome-1': 'Temps de courbure quotidien<br>réduit en 2 semaines',
+      'outcome-2': 'Mémoire musculaire formée<br>la bonne posture devient naturelle',
+      'outcome-3': 'Plus de douleurs<br>meilleure concentration',
+      'how-tag': '3 étapes',
+      'how-h2': 'Prêt en 30 secondes',
+      'step-1-h3': 'Ouvrir l\'application',
+      'step-1-p': 'Cliquez « Essai gratuit » — sans inscription, gratuit pour toujours',
+      'step-2-h3': 'Autoriser la caméra',
+      'step-2-p': 'La vidéo est traitée localement, jamais téléversée — autorisez en toute confiance',
+      'step-3-h3': 'Travaillez, soyez rappelé',
+      'step-3-p': 'Alerte vocale après 5 s de courbure — aucune action manuelle',
+      'pricing-tag': 'Tarifs',
+      'pricing-h2': 'Achat unique, sans abonnement',
+      'pricing-sub': 'Un seul achat. Contactez-nous sur WeChat, payez et recevez votre lien d\'accès.',
+      'plan-1-name': 'Découverte',
+      'plan-1-hours': '3 heures',
+      'plan-1-label-hours': 'Quota détection',
+      'plan-1-days': '7 jours',
+      'plan-1-label-days': 'Validité du lien',
+      'plan-1-per': '~<strong>¥1 / heure</strong>',
+      'plan-2-badge': '🔥 Le plus populaire',
+      'plan-2-name': 'Standard',
+      'plan-2-hours': '60 heures',
+      'plan-2-label-hours': 'Quota détection',
+      'plan-2-days': '14 jours',
+      'plan-2-label-days': 'Validité du lien',
+      'plan-2-per': '~<strong>¥0,40 / heure</strong>, −60 %',
+      'plan-3-name': 'Long terme',
+      'plan-3-hours': '300 heures',
+      'plan-3-label-hours': 'Quota détection',
+      'plan-3-days': '30 jours',
+      'plan-3-label-days': 'Validité du lien',
+      'plan-3-per': '~<strong>¥0,10 / heure</strong>, meilleur rapport',
+      'pricing-note': 'Essayez gratuitement avant d\'acheter ·',
+      'pricing-note-link': 'Commencer →',
+      'cta-h2': 'Protégez votre colonne dès maintenant',
+      'cta-p': 'Entièrement gratuit — sans inscription, ouvrez et utilisez',
+      'cta-btn': '▶ Essai gratuit',
+      'cta-note-1': 'Entièrement gratuit · Sans paiement · Sans inscription',
+      'cta-note-2': 'Les données caméra ne quittent jamais votre appareil',
+      'wechat-tag': 'Acheter / Contact',
+      'wechat-h2': 'Scannez pour WeChat',
+      'wechat-p': 'Payez et indiquez le forfait — nous vous enverrons le lien',
+      'wechat-hint': 'Ou recherchez l\'ID WeChat directement',
+      'footer-brand': '🪑 SitUpright · IA, vie privée protégée',
+      'footer-link-start': 'Démarrer',
+      'footer-link-features': 'Fonctionnalités',
+      'footer-link-cases': 'Cas d\'usage',
+      'lang-label': 'Français',
+    },
+
+    es: {
+      'nav-pricing': 'Precios',
+      'nav-cta': 'Probar gratis',
+      'hero-tag': 'IA · En tu navegador',
+      'hero-h1': 'Encorvado 5 segundos,<br>alerta inmediata',
+      'hero-sub': 'Abre la página, mira a la cámara y trabaja. La IA monitorea tu postura en tiempo real y te avisa cuando te encorvás.',
+      'hero-badge-1': 'Sin descarga',
+      'hero-badge-2': 'Datos de cámara en tu dispositivo',
+      'hero-badge-3': 'Sin registro',
+      'hero-btn-primary': '▶ Probar gratis',
+      'hero-btn-ghost': 'Saber más ↓',
+      'hero-note': 'Completamente gratis · Sin pago · Sin registro',
+      'preview-status': 'Monitor postura · En marcha',
+      'preview-badge': 'Buena postura ✓',
+      'preview-free': '✓ Completamente gratis, uso ilimitado',
+      'label-good': 'Buena postura',
+      'label-bad': 'Mala postura',
+      'label-timeline': 'Cronología',
+      'pain-tag': 'Casos de uso',
+      'pain-h2': '¿Te suena familiar?',
+      'pain-sub': 'Horas sentado cada día, el dolor de espalda es normal — sin que nadie te lo recuerde',
+      'pain-c1-h3': 'Desarrolladores y Diseñadores',
+      'pain-c1-p': 'Concentrado en el código, te inclinás sin darte cuenta — cuando sientes el dolor, ya llevas horas encorvado.',
+      'pain-c1-after': '✓ Con detección activa: encorvado 5 s → aviso inmediato, incluso en plena concentración',
+      'pain-c2-h3': 'Trabajo remoto',
+      'pain-c2-p': 'Sin las normas de la oficina, hundido en el sofá o en la cama — el daño crónico se acumula en silencio.',
+      'pain-c2-after': '✓ Abre cualquier navegador y monitorea tu postura en cualquier lugar',
+      'pain-c3-h3': 'Estudiantes',
+      'pain-c3-p': 'Horas encorvado sobre los libros afectan tu concentración y generan dolor en hombros y cuello.',
+      'pain-c3-after': '✓ Mejor postura → cuerpo relajado → concentración natural',
+      'feat-tag': 'Características',
+      'feat-h2': 'Una herramienta, todo el día',
+      'feat-sub': 'Impulsado por Google MediaPipe IA — sin hardware adicional, todo en el navegador',
+      'feat-1-h3': 'Detección esquelética en tiempo real',
+      'feat-1-p': 'La IA analiza tus puntos clave cada 0,2 s y detecta instantáneamente cualquier encorvamiento.',
+      'feat-2-h3': 'Alertas de voz inteligentes',
+      'feat-2-p': 'Alerta de voz a los 5 s de encorvamiento continuo; se repite cada 30 s; se reinicia al sentarte derecho.',
+      'feat-3-h3': 'Línea de tiempo de postura',
+      'feat-3-p': 'Cada segundo de buena o mala postura se registra y visualiza. Aparece un informe al detener la sesión.',
+      'feat-4-h3': 'IA local, privacidad segura',
+      'feat-4-p': 'Toda la inferencia ocurre en tu navegador. Ninguna imagen se sube, almacena ni envía. Funciona sin internet.',
+      'feat-5-h3': 'Funciona en segundo plano',
+      'feat-5-p': 'La detección usa un temporizador del sistema — cambiar de pestaña no pausa el monitoreo.',
+      'feat-6-h3': 'Abrir y usar, cero instalación',
+      'feat-6-p': 'Sin app, sin cuenta, sin instalación. Abre la página, permite la cámara, listo.',
+      'outcomes-tag': 'Resultados esperados',
+      'outcomes-h2': 'Persevera — los resultados se notan',
+      'outcome-1': 'Tiempo de encorvamiento diario<br>se reduce en 2 semanas',
+      'outcome-2': 'Se forma memoria muscular<br>la postura correcta se vuelve natural',
+      'outcome-3': 'Sin dolores<br>mejor concentración y energía',
+      'how-tag': '3 pasos',
+      'how-h2': 'Listo en 30 segundos',
+      'step-1-h3': 'Abrir la aplicación',
+      'step-1-p': 'Haz clic en «Probar gratis» — sin registro, gratis para siempre',
+      'step-2-h3': 'Permitir la cámara',
+      'step-2-p': 'El video se procesa localmente, nunca se sube — autoriza con confianza',
+      'step-3-h3': 'Trabaja, recibe recordatorios',
+      'step-3-p': 'Alerta de voz a los 5 s de encorvamiento — sin pasos manuales',
+      'pricing-tag': 'Precios',
+      'pricing-h2': 'Pago único, sin suscripción',
+      'pricing-sub': 'Una sola compra. Contáctanos por WeChat, paga y recibe tu enlace de acceso.',
+      'plan-1-name': 'Inicio',
+      'plan-1-hours': '3 horas',
+      'plan-1-label-hours': 'Cuota detección',
+      'plan-1-days': '7 días',
+      'plan-1-label-days': 'Validez del enlace',
+      'plan-1-per': '~<strong>¥1 / hora</strong>',
+      'plan-2-badge': '🔥 Más popular',
+      'plan-2-name': 'Estándar',
+      'plan-2-hours': '60 horas',
+      'plan-2-label-hours': 'Cuota detección',
+      'plan-2-days': '14 días',
+      'plan-2-label-days': 'Validez del enlace',
+      'plan-2-per': '~<strong>¥0,40 / hora</strong>, ahorra 60 %',
+      'plan-3-name': 'Largo plazo',
+      'plan-3-hours': '300 horas',
+      'plan-3-label-hours': 'Cuota detección',
+      'plan-3-days': '30 días',
+      'plan-3-label-days': 'Validez del enlace',
+      'plan-3-per': '~<strong>¥0,10 / hora</strong>, mejor valor',
+      'pricing-note': 'Prueba gratis antes de comprar ·',
+      'pricing-note-link': 'Comenzar →',
+      'cta-h2': 'Empieza a proteger tu columna hoy',
+      'cta-p': 'Completamente gratis — sin registro, abre y usa',
+      'cta-btn': '▶ Probar gratis',
+      'cta-note-1': 'Completamente gratis · Sin pago · Sin registro',
+      'cta-note-2': 'Los datos de cámara nunca salen de tu dispositivo',
+      'wechat-tag': 'Comprar / Contacto',
+      'wechat-h2': 'Escanea para WeChat',
+      'wechat-p': 'Paga e indica el plan — te enviaremos el enlace de acceso',
+      'wechat-hint': 'O busca el ID de WeChat directamente',
+      'footer-brand': '🪑 SitUpright · IA, privacidad segura',
+      'footer-link-start': 'Comenzar',
+      'footer-link-features': 'Características',
+      'footer-link-cases': 'Casos de uso',
+      'lang-label': 'Español',
+    },
+  }
+
+  // ── 语言检测 ──
+  function detectLang() {
+    var saved = localStorage.getItem('lang')
+    if (saved && TRANSLATIONS[saved]) return saved
+    var browser = (navigator.language || 'zh').slice(0, 2).toLowerCase()
+    return TRANSLATIONS[browser] ? browser : 'zh'
+  }
+
+  var currentLang = detectLang()
+
+  // ── 应用翻译 ──
+  function applyLang(lang) {
+    currentLang = lang
+    var dict = TRANSLATIONS[lang] || TRANSLATIONS.zh
+
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang
+
+    // textContent 类
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      var key = el.getAttribute('data-i18n')
+      if (dict[key] !== undefined) el.textContent = dict[key]
+    })
+
+    // innerHTML 类（含 <br>、<strong> 等）
+    document.querySelectorAll('[data-i18n-html]').forEach(function (el) {
+      var key = el.getAttribute('data-i18n-html')
+      if (dict[key] !== undefined) el.innerHTML = dict[key]
+    })
+
+    // 语言切换器标签
+    var labelEl = document.getElementById('lang-label')
+    if (labelEl && dict['lang-label']) labelEl.textContent = dict['lang-label']
+
+    // 菜单高亮
+    document.querySelectorAll('#lang-menu button').forEach(function (btn) {
+      btn.classList.toggle('active', btn.getAttribute('data-lang') === lang)
+    })
+  }
+
+  // ── 切换并持久化 ──
+  function setLang(lang) {
+    localStorage.setItem('lang', lang)
+    applyLang(lang)
+  }
+
+  // ── 语言切换器交互 ──
+  var langBtn  = document.getElementById('lang-btn')
+  var langMenu = document.getElementById('lang-menu')
+
+  langBtn.addEventListener('click', function (e) {
+    e.stopPropagation()
+    langMenu.classList.toggle('open')
+  })
+
+  document.addEventListener('click', function () {
+    langMenu.classList.remove('open')
+  })
+
+  langMenu.querySelectorAll('button').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation()
+      setLang(e.currentTarget.getAttribute('data-lang'))
+      langMenu.classList.remove('open')
+    })
+  })
+
+  // ── 页面加载时应用语言 ──
+  applyLang(currentLang)
+})()
+</script>
 
 </body>
 </html>
