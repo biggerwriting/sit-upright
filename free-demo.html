@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<!-- SEO -->
+<title>免费坐姿检测 · 无需注册，无限使用 | SitUpright</title>
+<meta name="description" content="免费 AI 坐姿检测，无需注册、无时间限制。弓腰超 5 秒自动语音提醒。Free posture monitor, no sign-up, unlimited use. Détecteur de posture gratuit. Detector de postura gratuito." />
+<meta name="keywords" content="free posture monitor,坐姿检测免费,détecteur posture gratuit,detector postura gratis,AI posture check,坐姿提醒" />
+<link rel="canonical" href="https://situpright.netlify.app/free-demo.html" />
+
+<!-- Open Graph -->
+<meta property="og:type"        content="website" />
+<meta property="og:title"       content="免费坐姿检测 · 无限使用 | SitUpright" />
+<meta property="og:description" content="AI 实时坐姿检测，完全免费，无需注册，无时间限制。" />
+<meta property="og:url"         content="https://situpright.netlify.app/free-demo.html" />
+<meta property="og:locale"      content="zh_CN" />
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-LWPWYW9TYZ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-LWPWYW9TYZ');
+</script>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 16px 24px;
+    gap: 20px;
+  }
+
+  /* ── 顶部导航条 ── */
+  .top-bar {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0 4px;
+  }
+  .back-link {
+    font-size: .85rem;
+    color: #64748b;
+    text-decoration: none;
+    transition: color .2s;
+  }
+  .back-link:hover { color: #22d3ee; }
+
+  /* ── 语言切换器 ── */
+  .lang-switcher {
+    position: relative;
+  }
+  .lang-btn {
+    background: transparent;
+    border: 1px solid #1e2d3d;
+    border-radius: 8px;
+    color: #64748b;
+    font-size: .8rem;
+    padding: 5px 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: border-color .2s, color .2s;
+  }
+  .lang-btn:hover { border-color: #22d3ee; color: #e2e8f0; }
+  .lang-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    background: #1e293b;
+    border: 1px solid #1e2d3d;
+    border-radius: 8px;
+    overflow: hidden;
+    min-width: 110px;
+    z-index: 50;
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
+  }
+  .lang-menu.open { display: block; }
+  .lang-menu button {
+    display: block;
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: .82rem;
+    padding: 9px 14px;
+    text-align: left;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .lang-menu button:hover { background: #0f2640; color: #e2e8f0; }
+  .lang-menu button.active { color: #22d3ee; font-weight: 600; }
+
+  /* ── 标题 ── */
+  h1 { font-size: 1.4rem; color: #94a3b8; letter-spacing: .05em; }
+
+  /* ── 摄像头区 ── */
+  #cam-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    aspect-ratio: 4/3;
+    background: #1e293b;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  #cam-wrap video, #cam-wrap canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1); /* 镜像 */
+  }
+  #cam-wrap canvas { background: transparent; }
+  #status-badge {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 14px;
+    border-radius: 999px;
+    font-size: .8rem;
+    font-weight: 600;
+    background: #475569;
+    color: #fff;
+    transition: background .3s;
+    z-index: 10;
+  }
+  #status-badge.good  { background: #16a34a; }
+  #status-badge.bad   { background: #ea580c; }
+  #status-badge.warn  { background: #dc2626; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+  /* ── 统计卡片 ── */
+  #stats-row {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    max-width: 480px;
+  }
+  .stat-card {
+    flex: 1;
+    background: #1e293b;
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+  }
+  .stat-card .label { font-size: .75rem; color: #64748b; margin-bottom: 4px; }
+  .stat-card .value { font-size: 1.5rem; font-weight: 700; }
+  .stat-card.good .value { color: #4ade80; }
+  .stat-card.bad  .value { color: #fb923c; }
+  .stat-card.total .value { color: #94a3b8; }
+
+  /* ── 时间轴 ── */
+  #timeline-wrap {
+    width: 100%;
+    max-width: 480px;
+    background: #1e293b;
+    border-radius: 10px;
+    padding: 14px;
+  }
+  #timeline-wrap h3 { font-size: .85rem; color: #64748b; margin-bottom: 8px; }
+  #timeline {
+    display: flex;
+    height: 20px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #334155;
+    gap: 1px;
+  }
+  .seg-good { background: #16a34a; }
+  .seg-bad  { background: #ea580c; }
+
+  /* ── 按钮 ── */
+  #btn {
+    padding: 12px 36px;
+    border: none;
+    border-radius: 999px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .2s, transform .1s;
+  }
+  #btn:active { transform: scale(.97); }
+  #btn:disabled { opacity: .4; cursor: not-allowed; }
+  #btn.start { background: #22c55e; color: #fff; }
+  #btn.stop  { background: #ef4444; color: #fff; }
+
+  /* ── 结束报告弹窗 ── */
+  #overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  #overlay.show { display: flex; }
+  #report {
+    background: #1e293b;
+    border-radius: 16px;
+    padding: 28px;
+    width: min(420px, 90vw);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  #report h2 { font-size: 1.2rem; }
+  .report-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: .9rem;
+  }
+  .report-row .key  { color: #94a3b8; }
+  .report-row .val  { font-weight: 600; }
+  .report-row .val.good  { color: #4ade80; }
+  .report-row .val.bad   { color: #fb923c; }
+  #report-timeline {
+    display: flex;
+    height: 18px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #334155;
+    gap: 1px;
+  }
+  #report-close {
+    align-self: flex-end;
+    padding: 8px 22px;
+    background: #334155;
+    border: none;
+    border-radius: 8px;
+    color: #e2e8f0;
+    cursor: pointer;
+    font-size: .9rem;
+  }
+  #report-close:hover { background: #475569; }
+
+  /* ── 模型加载/错误覆盖层 ── */
+  #loading-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #0f172a;
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  #loading-overlay.show { display: flex; }
+  .load-card {
+    background: #1e293b;
+    border-radius: 16px;
+    padding: 32px 28px;
+    width: min(420px, 90vw);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .load-card h2 { font-size: 1.3rem; }
+  .load-card p  { color: #94a3b8; font-size: .9rem; line-height: 1.6; }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid #334155;
+    border-top-color: #60a5fa;
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+    margin: 0 auto;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- 顶部导航条 -->
+<div class="top-bar">
+  <a href="/" class="back-link" data-i18n="back-home">← 返回首页</a>
+  <div class="lang-switcher">
+    <button class="lang-btn" id="lang-btn">🌐 <span id="lang-label">中文</span> ▾</button>
+    <div class="lang-menu" id="lang-menu">
+      <button data-lang="zh">中文</button>
+      <button data-lang="en">English</button>
+      <button data-lang="fr">Français</button>
+      <button data-lang="es">Español</button>
+    </div>
+  </div>
+</div>
+
+<h1 data-i18n="demo-h1">🪑 坐姿检测</h1>
+
+<!-- 模型加载 / 错误覆盖层 -->
+<div id="loading-overlay" class="show">
+  <!-- model-loading：AI 模型加载中 -->
+  <div id="state-model-loading" class="load-card">
+    <div class="spinner"></div>
+    <p id="model-loading-stage" data-i18n="model-loading-init">正在加载推理引擎…</p>
+    <p id="model-first-dl" style="font-size:.78rem;color:#475569;line-height:1.6">
+      首次访问需下载约 33 MB 的 AI 引擎<br>
+      视网速需要 <strong style="color:#94a3b8">20 – 60 秒</strong>，下载后自动缓存
+    </p>
+    <div style="width:100%;background:#1e293b;border-radius:4px;height:4px;overflow:hidden">
+      <div id="model-loading-bar" style="height:100%;background:linear-gradient(90deg,#22d3ee,#4ade80);width:0%;transition:width .5s ease"></div>
+    </div>
+  </div>
+  <!-- model-error：模型加载失败 -->
+  <div id="state-model-error" class="load-card" style="display:none">
+    <h2 data-i18n="model-error-title">⚠️ 模型加载失败</h2>
+    <p id="model-error-msg" style="color:#f87171"></p>
+    <button id="model-retry-btn"
+      style="padding:10px 28px;background:#22c55e;border:none;border-radius:8px;
+             color:#fff;font-weight:600;cursor:pointer;font-size:.95rem"
+      data-i18n="model-retry">
+      🔄 重新加载
+    </button>
+  </div>
+</div>
+
+<!-- 摄像头区 -->
+<div id="cam-wrap">
+  <video id="video" playsinline muted></video>
+  <canvas id="canvas"></canvas>
+  <div id="status-badge"></div>
+</div>
+
+<!-- 统计卡片 -->
+<div id="stats-row">
+  <div class="stat-card good">
+    <div class="label" data-i18n="label-good">优秀坐姿</div>
+    <div class="value" id="good-secs">0<small style="font-size:.7em">s</small></div>
+  </div>
+  <div class="stat-card total">
+    <div class="label" data-i18n="label-total">总时长</div>
+    <div class="value" id="total-secs">0<small style="font-size:.7em">s</small></div>
+  </div>
+  <div class="stat-card bad">
+    <div class="label" data-i18n="label-bad">不良坐姿</div>
+    <div class="value" id="bad-secs">0<small style="font-size:.7em">s</small></div>
+  </div>
+</div>
+
+<!-- 时间轴 -->
+<div id="timeline-wrap">
+  <h3 data-i18n="label-timeline">坐姿时间轴</h3>
+  <div id="timeline"></div>
+</div>
+
+<!-- 预加载音频 -->
+<audio id="alert-audio" src="./audio/posture-alert.mp3" preload="auto"></audio>
+
+<!-- 开始/停止按钮 -->
+<button id="btn" class="start" disabled></button>
+
+<!-- 结束报告弹窗 -->
+<div id="overlay">
+  <div id="report">
+    <h2 data-i18n="report-title">📊 本次检测报告</h2>
+    <div class="report-row">
+      <span class="key" data-i18n="report-duration">检测时长</span>
+      <span class="val" id="r-total">-</span>
+    </div>
+    <div class="report-row">
+      <span class="key" data-i18n="report-good">优秀坐姿</span>
+      <span class="val good" id="r-good">-</span>
+    </div>
+    <div class="report-row">
+      <span class="key" data-i18n="report-bad">不良坐姿</span>
+      <span class="val bad" id="r-bad">-</span>
+    </div>
+    <div class="report-row">
+      <span class="key" data-i18n="report-rate">优秀率</span>
+      <span class="val good" id="r-pct">-</span>
+    </div>
+    <div id="report-timeline"></div>
+    <button id="report-close" data-i18n="report-close">关闭</button>
+  </div>
+</div>
+
+<script type="module">
+// ──────────────────────────────────────────────────────────────
+// 1. 配置
+// ──────────────────────────────────────────────────────────────
+const MODEL_PATH         = './pose_landmarker_lite.task'
+const HUNCH_THRESHOLD    = 0.18
+const ALERT_BAD_SECONDS  = 5
+const ALERT_REPEAT_SECS  = 30
+
+const CONNECTIONS = [
+  [0,11],[0,12],[11,12],
+  [11,23],[12,24],[23,24],
+  [23,25],[24,26],[25,27],[26,28],
+]
+const KEY_IDXS = [0,11,12,23,24,25,26,27,28]
+
+// ──────────────────────────────────────────────────────────────
+// 2. i18n
+// ──────────────────────────────────────────────────────────────
+const TRANSLATIONS = {
+  zh: {
+    'back-home': '← 返回首页',
+    'demo-h1': '🪑 坐姿检测',
+    'btn-start': '开始检测',
+    'btn-stop': '停止检测',
+    'btn-loading': '正在加载模型…',
+    'badge-ready': '就绪，点击开始',
+    'badge-good': '坐姿良好 ✓',
+    'badge-bad': '检测到弓腰',
+    'badge-warn': '请坐直！已弓腰 {n}s',
+    'badge-stopped': '检测已停止',
+    'badge-camera-denied': '❌ 摄像头权限被拒',
+    'label-good': '优秀坐姿',
+    'label-bad': '不良坐姿',
+    'label-total': '总时长',
+    'label-timeline': '坐姿时间轴',
+    'report-title': '📊 本次检测报告',
+    'report-duration': '检测时长',
+    'report-good': '优秀坐姿',
+    'report-bad': '不良坐姿',
+    'report-rate': '优秀率',
+    'report-close': '关闭',
+    'model-loading-init': '正在加载推理引擎…',
+    'model-loading-wasm': '正在初始化 WASM 运行时…',
+    'model-loading-model': '正在加载姿态模型…',
+    'model-loading-done': '加载完成，即将开始…',
+    'model-first-dl': '首次访问需下载约 33 MB 的 AI 引擎<br>视网速需要 <strong style="color:#94a3b8">20 – 60 秒</strong>，下载后自动缓存',
+    'model-error-title': '⚠️ 模型加载失败',
+    'model-retry': '🔄 重新加载',
+    'model-error-net': '网络中断，请检查网络连接后重试。',
+    'model-error-404': '模型文件丢失（404），请刷新或联系管理员。',
+    'model-error-unknown': '未知错误',
+    'lang-label': '中文',
+  },
+  en: {
+    'back-home': '← Home',
+    'demo-h1': '🪑 Posture Monitor',
+    'btn-start': 'Start',
+    'btn-stop': 'Stop',
+    'btn-loading': 'Loading model…',
+    'badge-ready': 'Ready — click start',
+    'badge-good': 'Good posture ✓',
+    'badge-bad': 'Hunching detected',
+    'badge-warn': 'Sit up! Hunching {n}s',
+    'badge-stopped': 'Detection stopped',
+    'badge-camera-denied': '❌ Camera access denied',
+    'label-good': 'Good posture',
+    'label-bad': 'Poor posture',
+    'label-total': 'Total time',
+    'label-timeline': 'Posture timeline',
+    'report-title': '📊 Session Report',
+    'report-duration': 'Duration',
+    'report-good': 'Good posture',
+    'report-bad': 'Poor posture',
+    'report-rate': 'Good rate',
+    'report-close': 'Close',
+    'model-loading-init': 'Loading inference engine…',
+    'model-loading-wasm': 'Initializing WASM runtime…',
+    'model-loading-model': 'Loading pose model…',
+    'model-loading-done': 'Done, starting soon…',
+    'model-first-dl': 'First visit downloads ~33 MB of AI engine<br>Takes <strong style="color:#94a3b8">20 – 60 s</strong> depending on speed; auto-cached after',
+    'model-error-title': '⚠️ Model Load Failed',
+    'model-retry': '🔄 Retry',
+    'model-error-net': 'Network error. Check your connection and retry.',
+    'model-error-404': 'Model file missing (404). Refresh or contact support.',
+    'model-error-unknown': 'Unknown error',
+    'lang-label': 'English',
+  },
+  fr: {
+    'back-home': '← Accueil',
+    'demo-h1': '🪑 Surveillance de posture',
+    'btn-start': 'Démarrer',
+    'btn-stop': 'Arrêter',
+    'btn-loading': 'Chargement…',
+    'badge-ready': 'Prêt — cliquez pour démarrer',
+    'badge-good': 'Bonne posture ✓',
+    'badge-bad': 'Courbure détectée',
+    'badge-warn': 'Redressez-vous ! {n}s courbé',
+    'badge-stopped': 'Détection arrêtée',
+    'badge-camera-denied': '❌ Accès caméra refusé',
+    'label-good': 'Bonne posture',
+    'label-bad': 'Mauvaise posture',
+    'label-total': 'Durée totale',
+    'label-timeline': 'Chronologie',
+    'report-title': '📊 Rapport de séance',
+    'report-duration': 'Durée',
+    'report-good': 'Bonne posture',
+    'report-bad': 'Mauvaise posture',
+    'report-rate': 'Taux bon',
+    'report-close': 'Fermer',
+    'model-loading-init': 'Chargement du moteur IA…',
+    'model-loading-wasm': 'Initialisation WASM…',
+    'model-loading-model': 'Chargement du modèle…',
+    'model-loading-done': 'Terminé, démarrage…',
+    'model-first-dl': 'Premier accès : téléchargement ~33 Mo<br>Comptez <strong style="color:#94a3b8">20 – 60 s</strong> selon la connexion ; mis en cache ensuite',
+    'model-error-title': '⚠️ Échec du chargement',
+    'model-retry': '🔄 Réessayer',
+    'model-error-net': 'Erreur réseau. Vérifiez votre connexion et réessayez.',
+    'model-error-404': 'Fichier modèle introuvable (404). Rafraîchissez ou contactez le support.',
+    'model-error-unknown': 'Erreur inconnue',
+    'lang-label': 'Français',
+  },
+  es: {
+    'back-home': '← Inicio',
+    'demo-h1': '🪑 Monitor de postura',
+    'btn-start': 'Iniciar',
+    'btn-stop': 'Detener',
+    'btn-loading': 'Cargando modelo…',
+    'badge-ready': 'Listo — clic para iniciar',
+    'badge-good': 'Buena postura ✓',
+    'badge-bad': 'Encorvamiento detectado',
+    'badge-warn': '¡Siéntate recto! {n}s encorvado',
+    'badge-stopped': 'Detección detenida',
+    'badge-camera-denied': '❌ Acceso a cámara denegado',
+    'label-good': 'Buena postura',
+    'label-bad': 'Mala postura',
+    'label-total': 'Tiempo total',
+    'label-timeline': 'Cronología',
+    'report-title': '📊 Informe de sesión',
+    'report-duration': 'Duración',
+    'report-good': 'Buena postura',
+    'report-bad': 'Mala postura',
+    'report-rate': 'Tasa buena',
+    'report-close': 'Cerrar',
+    'model-loading-init': 'Cargando motor IA…',
+    'model-loading-wasm': 'Inicializando WASM…',
+    'model-loading-model': 'Cargando modelo…',
+    'model-loading-done': 'Listo, iniciando…',
+    'model-first-dl': 'Primera visita: descarga ~33 MB<br>Tarda <strong style="color:#94a3b8">20 – 60 s</strong> según conexión; se cachea después',
+    'model-error-title': '⚠️ Error al cargar',
+    'model-retry': '🔄 Reintentar',
+    'model-error-net': 'Error de red. Verifica tu conexión y reintenta.',
+    'model-error-404': 'Archivo de modelo no encontrado (404). Recarga o contacta soporte.',
+    'model-error-unknown': 'Error desconocido',
+    'lang-label': 'Español',
+  },
+}
+
+function detectLang() {
+  const saved = localStorage.getItem('lang')
+  if (saved && TRANSLATIONS[saved]) return saved
+  const browser = (navigator.language || 'zh').slice(0, 2).toLowerCase()
+  return TRANSLATIONS[browser] ? browser : 'zh'
+}
+
+function t(key) {
+  return (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key])
+    || (TRANSLATIONS.zh[key])
+    || key
+}
+
+function applyLang(lang) {
+  currentLang = lang
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang
+  document.title = lang === 'zh'
+    ? '免费坐姿检测 · 无需注册，无限使用 | SitUpright'
+    : lang === 'en' ? 'Free Posture Monitor · No Sign-Up, Unlimited | SitUpright'
+    : lang === 'fr' ? 'Détecteur de posture gratuit · Sans inscription | SitUpright'
+    : 'Detector de postura gratis · Sin registro | SitUpright'
+
+  // static data-i18n nodes
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n
+    const val = t(key)
+    if (key === 'model-first-dl') {
+      el.innerHTML = val
+    } else {
+      el.textContent = val
+    }
+  })
+
+  // lang label in switcher
+  document.getElementById('lang-label').textContent = t('lang-label')
+
+  // active state in menu
+  document.querySelectorAll('#lang-menu button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === lang)
+  })
+
+  // dynamic btn text (only when not running)
+  if (!running) {
+    if (landmarker) {
+      btn.textContent = t('btn-start')
+    } else {
+      btn.textContent = t('btn-loading')
+    }
+  } else {
+    btn.textContent = t('btn-stop')
+  }
+}
+
+let currentLang = detectLang()
+
+// ──────────────────────────────────────────────────────────────
+// 3. DOM 引用
+// ──────────────────────────────────────────────────────────────
+const video              = document.getElementById('video')
+const canvas             = document.getElementById('canvas')
+const ctx                = canvas.getContext('2d')
+const badge              = document.getElementById('status-badge')
+const btn                = document.getElementById('btn')
+const alertAudio         = document.getElementById('alert-audio')
+const goodEl             = document.getElementById('good-secs')
+const badEl              = document.getElementById('bad-secs')
+const totalEl            = document.getElementById('total-secs')
+const timelineEl         = document.getElementById('timeline')
+const overlay            = document.getElementById('overlay')
+const loadingOverlay     = document.getElementById('loading-overlay')
+const stateModelLoading  = document.getElementById('state-model-loading')
+const stateModelError    = document.getElementById('state-model-error')
+const modelLoadingStage  = document.getElementById('model-loading-stage')
+const modelLoadingBar    = document.getElementById('model-loading-bar')
+
+// ──────────────────────────────────────────────────────────────
+// 4. 状态
+// ──────────────────────────────────────────────────────────────
+let landmarker    = null
+let detectTimer   = null
+let tickTimer     = null
+let running       = false
+let lastIsHunch   = false
+
+let goodSecs      = 0
+let badSecs       = 0
+let continuousBad = 0
+let lastVoiceAt   = null
+
+let segments      = []
+let curSegType    = null
+let curSegDur     = 0
+
+// ──────────────────────────────────────────────────────────────
+// 5. 坐姿分析
+// ──────────────────────────────────────────────────────────────
+function analyzePosture(lms) {
+  const nose   = lms[0]
+  const lSh    = lms[11]
+  const rSh    = lms[12]
+  const shMidY = (lSh.y + rSh.y) / 2
+  const headShoulderDist = shMidY - nose.y
+  const noseBelowShoulder = nose.y > shMidY
+  return headShoulderDist < HUNCH_THRESHOLD || noseBelowShoulder
+}
+
+// ──────────────────────────────────────────────────────────────
+// 6. 语音提醒
+// ──────────────────────────────────────────────────────────────
+function playAudio() {
+  alertAudio.currentTime = 0
+  alertAudio.play().catch(() => {})
+}
+
+// ──────────────────────────────────────────────────────────────
+// 7. 时间轴渲染
+// ──────────────────────────────────────────────────────────────
+function renderTimeline(container, segs) {
+  const total = segs.reduce((s, g) => s + g.dur, 0)
+  if (total === 0) { container.innerHTML = ''; return }
+  container.innerHTML = segs.map(seg => {
+    const pct = (seg.dur / total * 100).toFixed(2)
+    return `<div class="seg-${seg.type}" style="flex:${pct} 0 0;min-width:2px" title="${seg.type}:${seg.dur}s"></div>`
+  }).join('')
+}
+
+// ──────────────────────────────────────────────────────────────
+// 8. 每秒统计 tick（无配额逻辑）
+// ──────────────────────────────────────────────────────────────
+function tick() {
+  const isHunch = lastIsHunch
+
+  if (isHunch) {
+    badSecs++
+    continuousBad++
+  } else {
+    goodSecs++
+    continuousBad = 0
+    lastVoiceAt   = null
+  }
+
+  // 更新 badge
+  if (!isHunch) {
+    badge.className = 'good'
+    badge.textContent = t('badge-good')
+  } else if (continuousBad >= ALERT_BAD_SECONDS) {
+    badge.className = 'warn'
+    badge.textContent = t('badge-warn').replace('{n}', continuousBad)
+  } else {
+    badge.className = 'bad'
+    badge.textContent = t('badge-bad')
+  }
+
+  // 语音提醒
+  if (isHunch && continuousBad >= ALERT_BAD_SECONDS) {
+    if (lastVoiceAt === null || continuousBad - lastVoiceAt >= ALERT_REPEAT_SECS) {
+      playAudio()
+      lastVoiceAt = continuousBad
+    }
+  }
+
+  // 更新数字
+  const type  = isHunch ? 'bad' : 'good'
+  const total = goodSecs + badSecs
+  goodEl.innerHTML  = `${goodSecs}<small style="font-size:.7em">s</small>`
+  badEl.innerHTML   = `${badSecs}<small style="font-size:.7em">s</small>`
+  totalEl.innerHTML = `${total}<small style="font-size:.7em">s</small>`
+
+  // 更新时间轴段
+  if (type === curSegType) {
+    curSegDur++
+    segments[segments.length - 1].dur = curSegDur
+  } else {
+    curSegType = type
+    curSegDur  = 1
+    segments.push({ type, dur: 1 })
+  }
+  renderTimeline(timelineEl, segments)
+}
+
+// ──────────────────────────────────────────────────────────────
+// 9. 推理循环（setInterval 200ms，后台标签页可用）
+// ──────────────────────────────────────────────────────────────
+function loop() {
+  if (!landmarker || !running) return
+  if (video.readyState < 2 || video.videoWidth === 0) return
+
+  canvas.width  = video.videoWidth
+  canvas.height = video.videoHeight
+  const tsMs = performance.now()
+
+  let result
+  try { result = landmarker.detectForVideo(video, tsMs) }
+  catch { return }
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+  if (result.landmarks.length > 0) {
+    const lms = result.landmarks[0]
+    const w = canvas.width, h = canvas.height
+
+    ctx.strokeStyle = 'rgba(100,220,100,.9)'
+    ctx.lineWidth = 2
+    for (const [i,j] of CONNECTIONS) {
+      ctx.beginPath()
+      ctx.moveTo(lms[i].x*w, lms[i].y*h)
+      ctx.lineTo(lms[j].x*w, lms[j].y*h)
+      ctx.stroke()
+    }
+    ctx.fillStyle = 'rgb(60,160,255)'
+    for (const idx of KEY_IDXS) {
+      ctx.beginPath()
+      ctx.arc(lms[idx].x*w, lms[idx].y*h, 5, 0, Math.PI*2)
+      ctx.fill()
+    }
+
+    lastIsHunch = analyzePosture(lms)
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// 10. 开始 / 停止
+// ──────────────────────────────────────────────────────────────
+async function startDetection() {
+  btn.disabled = true
+  btn.textContent = t('btn-stop') // 即将启动
+
+  let stream
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+  } catch {
+    badge.className = ''
+    badge.textContent = t('badge-camera-denied')
+    btn.textContent = t('btn-start')
+    btn.disabled = false
+    return
+  }
+
+  video.srcObject = stream
+  await video.play()
+
+  // 重置统计
+  goodSecs = badSecs = continuousBad = 0
+  lastVoiceAt = null
+  segments = []; curSegType = null; curSegDur = 0
+  goodEl.innerHTML = badEl.innerHTML = totalEl.innerHTML = '0'
+  timelineEl.innerHTML = ''
+
+  running = true
+  detectTimer = setInterval(loop, 200)
+  tickTimer   = setInterval(tick, 1000)
+
+  btn.textContent = t('btn-stop')
+  btn.className = 'stop'
+  btn.disabled = false
+}
+
+function stopDetection() {
+  running = false
+  if (detectTimer) { clearInterval(detectTimer); detectTimer = null }
+  if (tickTimer)   { clearInterval(tickTimer);   tickTimer   = null }
+
+  const stream = video.srcObject
+  if (stream) stream.getTracks().forEach(tr => tr.stop())
+  video.srcObject = null
+
+  badge.className = ''
+  badge.textContent = t('badge-stopped')
+
+  showReport()
+
+  btn.textContent = t('btn-start')
+  btn.className = 'start'
+}
+
+btn.addEventListener('click', () => {
+  if (running) stopDetection()
+  else         startDetection()
+})
+
+// ──────────────────────────────────────────────────────────────
+// 11. 报告弹窗
+// ──────────────────────────────────────────────────────────────
+function fmtTime(s) {
+  const m = Math.floor(s / 60)
+  const r = s % 60
+  return m > 0 ? `${m}m ${r}s` : `${r}s`
+}
+
+function showReport() {
+  const total = goodSecs + badSecs
+  const pct   = total === 0 ? 0 : Math.round(goodSecs / total * 100)
+
+  document.getElementById('r-total').textContent = fmtTime(total)
+  document.getElementById('r-good').textContent  = `${goodSecs}s (${pct}%)`
+  document.getElementById('r-bad').textContent   = `${badSecs}s (${100-pct}%)`
+  document.getElementById('r-pct').textContent   = `${pct}%`
+  renderTimeline(document.getElementById('report-timeline'), segments)
+
+  overlay.classList.add('show')
+}
+
+document.getElementById('report-close').addEventListener('click', () => {
+  overlay.classList.remove('show')
+})
+
+// ──────────────────────────────────────────────────────────────
+// 12. 覆盖层管理
+// ──────────────────────────────────────────────────────────────
+function showLoadingState(state) {
+  stateModelLoading.style.display = state === 'loading' ? '' : 'none'
+  stateModelError.style.display   = state === 'error'   ? '' : 'none'
+  loadingOverlay.classList.add('show')
+}
+
+function hideLoadingOverlay() {
+  loadingOverlay.classList.remove('show')
+}
+
+function setModelStage(text, progressPct) {
+  modelLoadingStage.textContent    = text
+  modelLoadingBar.style.width      = progressPct + '%'
+}
+
+function readyToDetect() {
+  hideLoadingOverlay()
+  badge.textContent = t('badge-ready')
+  btn.textContent   = t('btn-start')
+  btn.disabled      = false
+}
+
+// ──────────────────────────────────────────────────────────────
+// 13. 初始化 MediaPipe（模型就绪后直接解锁，无鉴权）
+// ──────────────────────────────────────────────────────────────
+async function init() {
+  showLoadingState('loading')
+  setModelStage(t('model-loading-init'), 15)
+
+  try {
+    const { PoseLandmarker, FilesetResolver } = await import(
+      './vendor/mediapipe/vision_bundle.mjs'
+    )
+
+    setModelStage(t('model-loading-wasm'), 45)
+    const vision = await FilesetResolver.forVisionTasks(
+      './vendor/mediapipe/wasm'
+    )
+
+    setModelStage(t('model-loading-model'), 80)
+    landmarker = await PoseLandmarker.createFromOptions(vision, {
+      baseOptions: { modelAssetPath: MODEL_PATH },
+      runningMode: 'VIDEO',
+      numPoses: 1,
+      minPoseDetectionConfidence: 0.6,
+      minPosePresenceConfidence: 0.6,
+      minTrackingConfidence: 0.6,
+    })
+
+    setModelStage(t('model-loading-done'), 100)
+
+  } catch (e) {
+    console.error('[init] 模型加载失败:', e)
+
+    const msg = e?.message ?? ''
+    let hint
+    if (msg.includes('404') || msg.includes('Failed to fetch model')) {
+      hint = t('model-error-404')
+    } else if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+      hint = t('model-error-net')
+    } else {
+      hint = t('model-error-unknown') + ': ' + msg.slice(0, 80)
+    }
+
+    document.getElementById('model-error-msg').textContent = hint
+    showLoadingState('error')
+
+    badge.textContent = t('model-error-title')
+    btn.textContent   = t('model-error-title')
+
+    throw e
+  }
+}
+
+// 重试按钮
+document.getElementById('model-retry-btn').addEventListener('click', () => {
+  setModelStage(t('model-loading-init'), 5)
+  showLoadingState('loading')
+  init().then(() => readyToDetect()).catch(e => console.error('[retry]', e))
+})
+
+// ──────────────────────────────────────────────────────────────
+// 14. 语言切换器交互
+// ──────────────────────────────────────────────────────────────
+const langBtn  = document.getElementById('lang-btn')
+const langMenu = document.getElementById('lang-menu')
+
+langBtn.addEventListener('click', e => {
+  e.stopPropagation()
+  langMenu.classList.toggle('open')
+})
+
+document.addEventListener('click', () => langMenu.classList.remove('open'))
+
+langMenu.querySelectorAll('button').forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.stopPropagation()
+    const lang = e.currentTarget.dataset.lang
+    localStorage.setItem('lang', lang)
+    applyLang(lang)
+    langMenu.classList.remove('open')
+  })
+})
+
+// ──────────────────────────────────────────────────────────────
+// 15. 启动
+// ──────────────────────────────────────────────────────────────
+
+// 先应用语言（让静态 data-i18n 节点正确显示）
+applyLang(currentLang)
+
+// 加载模型后直接解锁，无需鉴权
+init().then(() => readyToDetect()).catch(e => console.error('[init]', e))
+</script>
+</body>
+</html>
